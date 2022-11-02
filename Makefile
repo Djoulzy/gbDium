@@ -9,7 +9,8 @@ GBDK_HOME = ${GBDKDIR}
 
 LCC = $(GBDK_HOME)bin/lcc
 # RUNNER = $(GBDK_HOME)bin/visualboyadvance-m.app/Contents/MacOS/visualboyadvance-m
-RUNNER = $(GBDK_HOME)bin/SameBoy.app/Contents/MacOS/SameBoy
+# RUNNER = $(GBDK_HOME)bin/SameBoy.app/Contents/MacOS/SameBoy
+RUNNER = $(GBDK_HOME)bin/mGBA.app/Contents/MacOS/mGBA
 
 # You can set flags for LCC here
 # For example, you can uncomment the line below to turn on debug output
