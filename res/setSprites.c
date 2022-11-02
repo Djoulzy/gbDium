@@ -32,3 +32,37 @@ const metasprite_t ship_up4[] = {
 const metasprite_t* const ship_meta[5] = {
     ship_normal, ship_up1, ship_up2, ship_up3, ship_up4
 };
+
+const metasprite_t ship_retournement1[] = {
+    METASPR_ITEM(0, -8, 20, 0), METASPR_ITEM(0, 8, 22, 0),
+    METASPR_TERM
+};
+
+const metasprite_t ship_retournement2[] = {
+    METASPR_ITEM(0, -8, 24, 0), METASPR_ITEM(0, 8, 26, 0),
+    METASPR_TERM
+};
+
+const metasprite_t ship_retournement3[] = {
+    METASPR_ITEM(0, -8, 28, 0), METASPR_ITEM(0, 8, 30, 0),
+    METASPR_TERM
+};
+
+const metasprite_t ship_retournement4[] = {
+    METASPR_ITEM(0, -8, 32, 0), METASPR_ITEM(0, 8, 34, 0),
+    METASPR_TERM
+};
+
+const metasprite_t ship_retournement5[] = {
+    METASPR_ITEM(0, -8, 36, 0), METASPR_ITEM(0, 8, 38, 0),
+    METASPR_TERM
+};
+
+const metasprite_t ship_retournement6[] = {
+    METASPR_ITEM(0, -8, 40, 0), METASPR_ITEM(0, 8, 42, 0),
+    METASPR_TERM
+};
+
+const metasprite_t* const ship_retournement[6] = {
+    ship_retournement1, ship_retournement2, ship_retournement3, ship_retournement4, ship_retournement5, ship_retournement6
+};
