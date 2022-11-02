@@ -10,7 +10,9 @@ GBDK_HOME = ${GBDKDIR}
 LCC = $(GBDK_HOME)bin/lcc
 # RUNNER = $(GBDK_HOME)bin/visualboyadvance-m.app/Contents/MacOS/visualboyadvance-m
 # RUNNER = $(GBDK_HOME)bin/SameBoy.app/Contents/MacOS/SameBoy
-RUNNER = $(GBDK_HOME)bin/mGBA.app/Contents/MacOS/mGBA
+# RUNNER = $(GBDK_HOME)bin/mGBA.app/Contents/MacOS/mGBA
+RUNNER = $(GBDK_HOME)bgb/bgb.exe
+
 
 # You can set flags for LCC here
 # For example, you can uncomment the line below to turn on debug output
@@ -31,7 +33,8 @@ all: clean default
 
 test: default
 # $(RUNNER) $(BINS) &
-	open $(BINS) -a $(RUNNER)
+# open $(BINS) -a $(RUNNER)
+	/usr/local/bin/wine64 $(RUNNER) $(BINS) &
 
 default: ${OBJS} $(BINS)
 
@@ -57,7 +60,7 @@ $(BINS): $(OBJS)
 	$(LCC) $(LCCFLAGS) -o $(BINS) $(OBJS)
 
 sprite:
-	wine $(GBDK_HOME)gbtd22/GBTD.EXE
+	wine64 $(GBDK_HOME)gbtd22/GBTD.EXE
 
 clean:
 #	rm -f  *.gb *.ihx *.cdb *.adb *.noi *.map

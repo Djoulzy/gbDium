@@ -1,5 +1,7 @@
 #include <gb/gb.h>
+#include <gbdk/emu_debug.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <gbdk/platform.h>
 #include <gbdk/metasprites.h>
 #include "../res/setSprites.h"
@@ -24,8 +26,8 @@ void init_gfx() {
 
 void main(void)
 {
-    uint16_t ShipX, ShipY, inclinaison;
-    int16_t SpdX, SpdY, direction;
+    uint16_t ShipX, ShipY;
+    int16_t SpdX, SpdY, direction, inclinaison;
     uint8_t hiwater = 0;
 
 	init_gfx();
@@ -33,7 +35,7 @@ void main(void)
     joypad_init(1, &joypads);
 
     ShipX = ShipY = 64 << 4;
-    SpdX = SpdY = direction = 0;
+    SpdX = SpdY = direction = inclinaison = 0;
 
     // Loop forever
     while(1) {
@@ -41,30 +43,41 @@ void main(void)
 
         joypad_ex(&joypads);
         if (joypads.joy0 & J_UP) {
-            // SpdY -= 2;
-            // if (SpdY < -32) SpdY = -32;
+            SpdY -= 2;
+            if (SpdY < -16) SpdY = -16;
+            inclinaison++;
+            if (inclinaison > 4) inclinaison = 4;
         } else if (joypads.joy0 & J_DOWN) {
-            // SpdY += 2;
-            // if (SpdY > 32) SpdY = 32;
-        }
+            SpdY += 2;
+            if (SpdY > 16) SpdY = 16;
+            inclinaison--;
+            if (inclinaison < -4) inclinaison = -4;
+        } else inclinaison = 0;
 
         if (joypads.joy0 & J_LEFT) {
             SpdX -= 2;
-            if (SpdX < -32) SpdX = -32;
+            if (SpdX < -16) SpdX = -16;
             direction = -1;
         } else if (joypads.joy0 & J_RIGHT) {
             SpdX += 2;
-            if (SpdX > 32) SpdX = 32;
+            if (SpdX > 16) SpdX = 16;
             direction = 1;
         }
         ShipX += SpdX, ShipY += SpdY;
 
-    
-
-        if (direction >= 0)
-            hiwater = move_metasprite(ship_meta[0], 0, SHIP_SPRITE, (ShipX >> 4), (ShipY >> 4));
-        else
-            hiwater = move_metasprite_vflip(ship_meta[0], 0, SHIP_SPRITE, (ShipX >> 4), (ShipY >> 4));
+        if (direction >= 0) {
+            if (inclinaison >= 0)
+                hiwater = move_metasprite(ship_meta[abs(inclinaison)], 0, SHIP_SPRITE, (ShipX >> 4), (ShipY >> 4));
+            else {
+                EMU_printf("%d", inclinaison);
+                hiwater = move_metasprite_hflip(ship_meta[abs(inclinaison)], 0, SHIP_SPRITE, (ShipX >> 4), (ShipY >> 4)+16);
+            }
+        }
+        else {
+            if (inclinaison >= 0)
+                hiwater = move_metasprite_vflip(ship_meta[abs(inclinaison)], 0, SHIP_SPRITE, (ShipX >> 4), (ShipY >> 4));
+            else hiwater = move_metasprite_hvflip(ship_meta[abs(inclinaison)], 0, SHIP_SPRITE, (ShipX >> 4), (ShipY >> 4)+16);
+        }
         // hide_sprites_range(hiwater, 40);  
 
 		// Done processing, yield CPU and wait for start of next frame
