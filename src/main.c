@@ -124,18 +124,6 @@ void main(void)
 
         joypad_ex(&joypads);
 
-        if (joypads.joy0 & J_A) {
-            if ((next_shoot < MAX_SHOOT_NUM) && (!shoot_delay) && (!retournement)) {
-                EMU_printf("SHOOT !");
-                ship_shoot[next_shoot].dir = direction;
-                ship_shoot[next_shoot].active = 1;
-                ship_shoot[next_shoot].x = ShipX >> SCREEN_MULTI;
-                ship_shoot[next_shoot].y = (ShipY >> SCREEN_MULTI) + 4;
-                if (direction < 0) set_sprite_prop(SHOOT_SPRITE+next_shoot, S_FLIPX);
-                shoot_delay = SHOOT_DELAY;
-            }
-        }
-
         if (joypads.joy0 & J_UP) {
             SpdY -= SHIP_ACCEL;
             if (SpdY < - MAX_SHIP_SPEED) SpdY = - MAX_SHIP_SPEED;
@@ -176,6 +164,18 @@ void main(void)
         ShipX += SpdX, ShipY += SpdY;
         tmpX = ShipX >> SCREEN_MULTI;
         tmpY = ShipY >> SCREEN_MULTI;
+
+        if (joypads.joy0 & J_A) {
+            if ((next_shoot < MAX_SHOOT_NUM) && (!shoot_delay) && (!retournement)) {
+                EMU_printf("SHOOT !");
+                ship_shoot[next_shoot].dir = direction;
+                ship_shoot[next_shoot].active = 1;
+                ship_shoot[next_shoot].x = tmpX;
+                ship_shoot[next_shoot].y = tmpY + 4;
+                if (direction < 0) set_sprite_prop(SHOOT_SPRITE+next_shoot, S_FLIPX);
+                shoot_delay = SHOOT_DELAY;
+            }
+        }
 
         if (retournement) {
             if (direction >= 0)
