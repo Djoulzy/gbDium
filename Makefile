@@ -62,6 +62,9 @@ $(BINS): $(OBJS)
 sprite:
 	wine64 $(GBDK_HOME)gbtd22/GBTD.EXE
 
+map:
+	wine64 $(GBDK_HOME)gbmb18/GBMB.EXE
+
 clean:
 #	rm -f  *.gb *.ihx *.cdb *.adb *.noi *.map
 	rm -f  $(OBJDIR)/*.*

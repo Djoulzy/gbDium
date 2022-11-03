@@ -5,36 +5,36 @@
 #include <gbdk/platform.h>
 #include <gbdk/metasprites.h>
 #include "../res/setSprites.h"
+#include "../res/backgrounds.h"
+#include "../res/scene1.h"
 
 #define SHIP_SPRITE     0
 #define SHOOT_SPRITE    4
+#define MAX_SHOOT_NUM   6
+#define SHOOT_DELAY     10
 #define MAX_SHIP_SPEED  16
 #define SHIP_ACCEL      2
 
 joypads_t joypads;
 
-typedef struct ShipShoot ShipShoot;
+typedef struct ShipShoot ShipShoot_t;
 struct ShipShoot {
     uint8_t active;
-    uint8_t sprite_num;
     int8_t dir;
     int16_t x,y;
 };
 
 void init_gfx() {
     // Screen : 160x144
+    SPRITES_8x8;
 
     // Load Background tiles and then map
-    // set_bkg_data(0, 79u, dungeon_tiles);
-    // set_bkg_tiles(0, 0, 32u, 32u, dungeon_mapPLN0);
-
-    SPRITES_8x8;
+    set_bkg_data(0, 10, backgrounds);
+    set_bkg_tiles(0, 0, 32, 32, Scene1);
     set_sprite_data(0, 45, Ship);
-    set_sprite_tile(SHOOT_SPRITE, 44);
-    move_sprite(SHOOT_SPRITE, 10, 10);
 
 	// Turn the background map on to make it visible
-    // SHOW_BKG;
+    SHOW_BKG;
     SHOW_SPRITES;
 }
 
@@ -43,8 +43,8 @@ void main(void)
     uint16_t ShipX, ShipY, retourn_anim;
     int16_t SpdX, SpdY;
     int8_t direction, inclinaison;
-    uint8_t hiwater, retournement = 0;
-    ShipShoot ship_shoot;
+    uint8_t i, hiwater, next_shoot = 0, shoot_delay = 0, retournement = 0;
+    ShipShoot_t ship_shoot[MAX_SHOOT_NUM];
 
 	init_gfx();
 
@@ -54,6 +54,11 @@ void main(void)
     SpdX = SpdY = inclinaison = retourn_anim = 0;
     direction = 1;
 
+    for (i = 0; i<MAX_SHOOT_NUM; i++) {
+        set_sprite_tile(SHOOT_SPRITE+i, 44);
+        ship_shoot[i].active = 0;
+    }
+
     // Loop forever
     while(1) {
 		// Game main loop processing goes here
@@ -61,12 +66,15 @@ void main(void)
         joypad_ex(&joypads);
 
         if (joypads.joy0 & J_A) {
-            EMU_printf("A PRESSED");
-            ship_shoot.dir = direction;
-            ship_shoot.active = 1;
-            ship_shoot.sprite_num = SHOOT_SPRITE;
-            ship_shoot.x = ShipX;
-            ship_shoot.y = ShipY;
+            if ((next_shoot < MAX_SHOOT_NUM) && (!shoot_delay) && (!retournement)) {
+                EMU_printf("SHOOT !");
+                ship_shoot[next_shoot].dir = direction;
+                ship_shoot[next_shoot].active = 1;
+                ship_shoot[next_shoot].x = ShipX >> 4;
+                ship_shoot[next_shoot].y = (ShipY >> 4) + 4;
+                if (direction < 0) set_sprite_prop(SHOOT_SPRITE+next_shoot, S_FLIPX);
+                shoot_delay = SHOOT_DELAY;
+            }
         }
 
         if (joypads.joy0 & J_UP) {
@@ -130,16 +138,22 @@ void main(void)
         }
         // hide_sprites_range(hiwater, 40);
 
-        if (ship_shoot.active) {
-            if (ship_shoot.dir >= 0) ship_shoot.x++;
-            else ship_shoot.x--;
-            if ((ship_shoot.x < 0) || (ship_shoot.x > 160))
-                ship_shoot.active = 0;
-            else
-                move_sprite(ship_shoot.sprite_num, ship_shoot.x, ship_shoot.y);
+        next_shoot = 100;
+        for (i = 0; i<MAX_SHOOT_NUM; i++) {
+            if (ship_shoot[i].active) {
+                if (ship_shoot[i].dir >= 0) ship_shoot[i].x += 4;
+                else ship_shoot[i].x -= 4;
+                move_sprite(SHOOT_SPRITE+i, ship_shoot[i].x, ship_shoot[i].y);
+                if ((ship_shoot[i].x < -9) || (ship_shoot[i].x > 168)) {
+                    ship_shoot[i].active = 0;
+                    next_shoot = i;
+                }
+            } else next_shoot = i;
         }
 
 		// Done processing, yield CPU and wait for start of next frame
+        if (shoot_delay) shoot_delay--;
+        EMU_printf("Delay %d", shoot_delay);
         wait_vbl_done();
     }
 }
