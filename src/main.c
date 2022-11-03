@@ -28,6 +28,8 @@ uint8_t map_pos_x, map_pos_y, old_map_pos_x, old_map_pos_y;
 // redraw flag, indicates that camera position was changed
 uint8_t redraw;
 
+uint16_t screenMaxWidth, screenMaxHeight;
+
 typedef struct ShipShoot ShipShoot_t;
 struct ShipShoot {
     uint8_t active;
@@ -54,6 +56,9 @@ void init_gfx() {
 
     camera_x = camera_y = 0;
     old_camera_x = camera_x; old_camera_y = camera_y;
+
+    screenMaxWidth = 160 << SCREEN_MULTI;
+    screenMaxHeight = 144 << SCREEN_MULTI;
 
 	// Turn the background map on to make it visible
     SHOW_BKG;
@@ -90,18 +95,20 @@ void set_camera(const uint8_t * scene, uint16_t sceneWidth, uint16_t sceneHeight
 
 void main(void)
 {
-    uint16_t ShipX, ShipY, retourn_anim;
+    uint16_t ShipX, ShipY, tmpX, tmpY;
     int16_t SpdX, SpdY;
+    uint16_t retourn_anim;
     int8_t direction, inclinaison;
-    uint8_t i, hiwater, next_shoot = 0, shoot_delay = 0, retournement = 0;
+    uint8_t i, hiwater, next_shoot = 0, shoot_delay = 0;
+    uint8_t retournement = FALSE;
     ShipShoot_t ship_shoot[MAX_SHOOT_NUM];
 
 	init_gfx();
 
     joypad_init(1, &joypads);
 
-    ShipX = 80 << SCREEN_MULTI;
-    ShipY = 72 << SCREEN_MULTI;
+    ShipX = 88 << SCREEN_MULTI;
+    ShipY = 80 << SCREEN_MULTI;
     SpdX = SpdY = inclinaison = retourn_anim = 0;
     direction = 1;
 
@@ -144,56 +151,77 @@ void main(void)
             else inclinaison++;
         }
 
-        if (joypads.joy0 & J_LEFT) {
-            // SpdX -= SHIP_ACCEL;
-            // if (SpdX < - MAX_SHIP_SPEED) SpdX = - MAX_SHIP_SPEED;
-            if (camera_x) {
-                camera_x -= SHIP_ACCEL;
-                redraw = TRUE;
-            }
-            if ((direction == 1) && (!retournement)) {
+        if ((joypads.joy0 & J_LEFT) && (!retournement)) {
+            if (direction == 1) {
                 // EMU_printf("Go LEFT");
-                retournement = 1;
+                retournement = TRUE;
                 retourn_anim = 0;
+                SpdX += SHIP_ACCEL;
+            } else {
+                SpdX -= SHIP_ACCEL;
+                if (SpdX < - MAX_SHIP_SPEED) SpdX = - MAX_SHIP_SPEED;
             }
-        } else if (joypads.joy0 & J_RIGHT) {
-            // SpdX += SHIP_ACCEL;
-            // if (SpdX > MAX_SHIP_SPEED) SpdX = MAX_SHIP_SPEED;
-            if (camera_x < camera_max_x) {
-                camera_x += SHIP_ACCEL;
-                redraw = TRUE;
-            }
-            if ((direction == -1) && (!retournement)) {
+        } else if ((joypads.joy0 & J_RIGHT)&& (!retournement)) {
+            if (direction == -1) {
                 // EMU_printf("Go RIGHT");
-                retournement = 1;
+                retournement = TRUE;
                 retourn_anim = 0;
+                SpdX -= SHIP_ACCEL;
+            } else {
+                SpdX += SHIP_ACCEL;
+                if (SpdX > MAX_SHIP_SPEED) SpdX = MAX_SHIP_SPEED;
             }
         }
+
         ShipX += SpdX, ShipY += SpdY;
+        tmpX = ShipX >> SCREEN_MULTI;
+        tmpY = ShipY >> SCREEN_MULTI;
 
         if (retournement) {
             if (direction >= 0)
-                hiwater = move_metasprite(ship_retournement[retourn_anim >> 2], 0, SHIP_SPRITE, (ShipX >> SCREEN_MULTI), (ShipY >> SCREEN_MULTI));
+                hiwater = move_metasprite(ship_retournement[retourn_anim >> 2], 0, SHIP_SPRITE, tmpX, tmpY);
             else
-                hiwater = move_metasprite_vflip(ship_retournement[retourn_anim >> 2], 0, SHIP_SPRITE, (ShipX >> SCREEN_MULTI), (ShipY >> SCREEN_MULTI));
+                hiwater = move_metasprite_vflip(ship_retournement[retourn_anim >> 2], 0, SHIP_SPRITE, tmpX, tmpY);
             retourn_anim++;
-            if (retourn_anim>20) {
-                retournement = 0;
+            if (retourn_anim > 20) {
+                retournement = FALSE;
                 inclinaison = 16;
                 direction *= -1;
+                SpdX = SHIP_ACCEL * direction;
             }
         } else {
+            if (tmpX > 160)  {
+                retournement = TRUE;
+                retourn_anim = 0;
+                SpdX = 0;
+                ShipX = 160 << SCREEN_MULTI;
+            }
+            if (tmpX < 16)  {
+                retournement = TRUE;
+                retourn_anim = 0;
+                SpdX = 0;
+                ShipX = 16 << SCREEN_MULTI;
+            }
+            if (tmpY < 16) {
+                ShipY = 16 << SCREEN_MULTI;
+                SpdY = 0;
+            }
+            if (tmpY > 144) {
+                ShipY = 144 << SCREEN_MULTI;
+                SpdY = 0;
+            }
+
             if (direction >= 0) {
                 if (inclinaison >= 0)
-                    hiwater = move_metasprite(ship_meta[abs(inclinaison >> 2)], 0, SHIP_SPRITE, (ShipX >> SCREEN_MULTI), (ShipY >> SCREEN_MULTI));
+                    hiwater = move_metasprite(ship_meta[abs(inclinaison >> 2)], 0, SHIP_SPRITE, tmpX, tmpY);
                 else {
-                    hiwater = move_metasprite_hflip(ship_meta[abs(inclinaison >> 2)], 0, SHIP_SPRITE, (ShipX >> SCREEN_MULTI), (ShipY >> SCREEN_MULTI)+16);
+                    hiwater = move_metasprite_hflip(ship_meta[abs(inclinaison >> 2)], 0, SHIP_SPRITE, tmpX, tmpY+16);
                 }
             }
             else {
                 if (inclinaison >= 0)
-                    hiwater = move_metasprite_vflip(ship_meta[abs(inclinaison >> 2)], 0, SHIP_SPRITE, (ShipX >> SCREEN_MULTI), (ShipY >> SCREEN_MULTI));
-                else hiwater = move_metasprite_hvflip(ship_meta[abs(inclinaison >> 2)], 0, SHIP_SPRITE, (ShipX >> SCREEN_MULTI), (ShipY >> SCREEN_MULTI)+16);
+                    hiwater = move_metasprite_vflip(ship_meta[abs(inclinaison >> 2)], 0, SHIP_SPRITE, tmpX, tmpY);
+                else hiwater = move_metasprite_hvflip(ship_meta[abs(inclinaison >> 2)], 0, SHIP_SPRITE, tmpX, tmpY+16);
             }
         }
         // hide_sprites_range(hiwater, 40);
