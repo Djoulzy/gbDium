@@ -12,9 +12,9 @@
   Tile size            : 8 x 8
   Tiles                : 0 to 44
 
-  Palette colors       : None.
+  Palette colors       : Included.
   SGB Palette          : None.
-  CGB Palette          : None.
+  CGB Palette          : Constant per entry.
 
   Convert to metatiles : No.
 
@@ -25,6 +25,125 @@
 
 /* Bank of tiles. */
 #define ShipBank 0
+
+/* Super Gameboy palette 0 */
+#define ShipSGBPal0c0 6076
+#define ShipSGBPal0c1 8935
+#define ShipSGBPal0c2 6596
+#define ShipSGBPal0c3 5344
+
+/* Super Gameboy palette 1 */
+#define ShipSGBPal1c0 6076
+#define ShipSGBPal1c1 8935
+#define ShipSGBPal1c2 6596
+#define ShipSGBPal1c3 5344
+
+/* Super Gameboy palette 2 */
+#define ShipSGBPal2c0 6076
+#define ShipSGBPal2c1 8935
+#define ShipSGBPal2c2 6596
+#define ShipSGBPal2c3 5344
+
+/* Super Gameboy palette 3 */
+#define ShipSGBPal3c0 6076
+#define ShipSGBPal3c1 8935
+#define ShipSGBPal3c2 6596
+#define ShipSGBPal3c3 5344
+
+/* Gameboy Color palette 0 */
+#define ShipCGBPal0c0 32767
+#define ShipCGBPal0c1 16912
+#define ShipCGBPal0c2 8456
+#define ShipCGBPal0c3 31536
+
+/* Gameboy Color palette 1 */
+#define ShipCGBPal1c0 6076
+#define ShipCGBPal1c1 8935
+#define ShipCGBPal1c2 6596
+#define ShipCGBPal1c3 5344
+
+/* Gameboy Color palette 2 */
+#define ShipCGBPal2c0 6076
+#define ShipCGBPal2c1 8935
+#define ShipCGBPal2c2 6596
+#define ShipCGBPal2c3 5344
+
+/* Gameboy Color palette 3 */
+#define ShipCGBPal3c0 6076
+#define ShipCGBPal3c1 8935
+#define ShipCGBPal3c2 6596
+#define ShipCGBPal3c3 5344
+
+/* Gameboy Color palette 4 */
+#define ShipCGBPal4c0 6076
+#define ShipCGBPal4c1 8935
+#define ShipCGBPal4c2 6596
+#define ShipCGBPal4c3 5344
+
+/* Gameboy Color palette 5 */
+#define ShipCGBPal5c0 6076
+#define ShipCGBPal5c1 8935
+#define ShipCGBPal5c2 6596
+#define ShipCGBPal5c3 5344
+
+/* Gameboy Color palette 6 */
+#define ShipCGBPal6c0 6076
+#define ShipCGBPal6c1 8935
+#define ShipCGBPal6c2 6596
+#define ShipCGBPal6c3 5344
+
+/* Gameboy Color palette 7 */
+#define ShipCGBPal7c0 6076
+#define ShipCGBPal7c1 8935
+#define ShipCGBPal7c2 6596
+#define ShipCGBPal7c3 5344
+
+/* CGB palette entries. */
+#define ShipCGB0 0
+#define ShipCGB1 0
+#define ShipCGB2 0
+#define ShipCGB3 0
+#define ShipCGB4 0
+#define ShipCGB5 0
+#define ShipCGB6 0
+#define ShipCGB7 0
+#define ShipCGB8 0
+#define ShipCGB9 0
+#define ShipCGB10 0
+#define ShipCGB11 0
+#define ShipCGB12 0
+#define ShipCGB13 0
+#define ShipCGB14 0
+#define ShipCGB15 0
+#define ShipCGB16 0
+#define ShipCGB17 0
+#define ShipCGB18 0
+#define ShipCGB19 0
+#define ShipCGB20 0
+#define ShipCGB21 0
+#define ShipCGB22 0
+#define ShipCGB23 0
+#define ShipCGB24 0
+#define ShipCGB25 0
+#define ShipCGB26 0
+#define ShipCGB27 0
+#define ShipCGB28 0
+#define ShipCGB29 0
+#define ShipCGB30 0
+#define ShipCGB31 0
+#define ShipCGB32 0
+#define ShipCGB33 0
+#define ShipCGB34 0
+#define ShipCGB35 0
+#define ShipCGB36 0
+#define ShipCGB37 0
+#define ShipCGB38 0
+#define ShipCGB39 0
+#define ShipCGB40 0
+#define ShipCGB41 0
+#define ShipCGB42 0
+#define ShipCGB43 0
+#define ShipCGB44 0
 /* Start of tile array. */
 extern unsigned char Ship[];
 
