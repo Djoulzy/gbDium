@@ -22,13 +22,14 @@ joypads_t joypads;
 
 uint16_t camera_max_x, camera_max_y;
 // current and old positions of the camera in pixels
-uint16_t camera_x, camera_y, old_camera_x, old_camera_y;
+int16_t camera_x, camera_y;
+uint16_t old_camera_x, old_camera_y;
 // current and old position of the map in tiles
 uint8_t map_pos_x, map_pos_y, old_map_pos_x, old_map_pos_y;
 // redraw flag, indicates that camera position was changed
 uint8_t redraw;
 
-uint16_t screenMaxWidth, screenMaxHeight;
+uint16_t middleWidth, middleHeight;
 
 typedef struct ShipShoot ShipShoot_t;
 struct ShipShoot {
@@ -47,18 +48,17 @@ void init_gfx() {
     // set_bkg_tiles(0, 0, 32, 32, Scene1);
     set_sprite_data(0, 45, Ship);
 
-    camera_max_y = (Scene1Height - 18) * 8;
-    camera_max_x = (Scene1Width - 20) * 8;
+    camera_max_y = ((Scene1Height - 18) * 8) << SCREEN_MULTI;
+    camera_max_x = ((Scene1Width - 20) * 8) << SCREEN_MULTI;
 
     map_pos_x = map_pos_y = 0; 
     old_map_pos_x = old_map_pos_y = 255;
     set_bkg_submap(map_pos_x, map_pos_y, 20, 18, Scene1, Scene1Width);
 
-    camera_x = camera_y = 0;
     old_camera_x = camera_x; old_camera_y = camera_y;
 
-    screenMaxWidth = 160 << SCREEN_MULTI;
-    screenMaxHeight = 144 << SCREEN_MULTI;
+    middleWidth = 88 << SCREEN_MULTI;
+    middleHeight = 80 << SCREEN_MULTI;
 
 	// Turn the background map on to make it visible
     SHOW_BKG;
@@ -67,12 +67,17 @@ void init_gfx() {
 }
 
 void set_camera(const uint8_t * scene, uint16_t sceneWidth, uint16_t sceneHeight) {
+    uint16_t tmpX, tmpY;
+
+    tmpX = camera_x >> SCREEN_MULTI;
+    tmpY = camera_y >> SCREEN_MULTI;
+
     // update hardware scroll position
-    SCY_REG = camera_y; SCX_REG = camera_x; 
+    SCY_REG = tmpY; SCX_REG = tmpX; 
     // up or down
-    map_pos_y = (uint8_t)(camera_y >> 3u);
+    map_pos_y = (uint8_t)(tmpY >> 3u);
     if (map_pos_y != old_map_pos_y) { 
-        if (camera_y < old_camera_y) {
+        if (tmpY < old_camera_y) {
             set_bkg_submap(map_pos_x, map_pos_y, MIN(21u, sceneWidth-map_pos_x), 1, scene, sceneWidth);
         } else {
             if ((sceneHeight - 18u) > map_pos_y) set_bkg_submap(map_pos_x, map_pos_y + 18u, MIN(21u, sceneWidth-map_pos_x), 1, scene, sceneWidth);     
@@ -80,9 +85,9 @@ void set_camera(const uint8_t * scene, uint16_t sceneWidth, uint16_t sceneHeight
         old_map_pos_y = map_pos_y; 
     }
     // left or right
-    map_pos_x = (uint8_t)(camera_x >> 3u);
+    map_pos_x = (uint8_t)(tmpX >> 3u);
     if (map_pos_x != old_map_pos_x) {
-        if (camera_x < old_camera_x) {
+        if (tmpX < old_camera_x) {
             set_bkg_submap(map_pos_x, map_pos_y, 1, MIN(19u, sceneHeight - map_pos_y), scene, sceneWidth);     
         } else {
             if ((sceneWidth - 20u) > map_pos_x) set_bkg_submap(map_pos_x + 20u, map_pos_y, 1, MIN(19u, sceneHeight - map_pos_y), scene, sceneWidth);     
@@ -90,12 +95,12 @@ void set_camera(const uint8_t * scene, uint16_t sceneWidth, uint16_t sceneHeight
         old_map_pos_x = map_pos_x;
     }
     // set old camera position to current camera position
-    old_camera_x = camera_x, old_camera_y = camera_y;
+    old_camera_x = tmpX, old_camera_y = tmpY;
 }
 
 void main(void)
 {
-    uint16_t ShipX, ShipY, tmpX, tmpY;
+    uint16_t ShipX, ShipY, tmpX, tmpY, ShipAbsX, ShipAbsY;
     int16_t SpdX, SpdY;
     uint16_t retourn_anim;
     int8_t direction, inclinaison;
@@ -107,8 +112,10 @@ void main(void)
 
     joypad_init(1, &joypads);
 
-    ShipX = 88 << SCREEN_MULTI;
-    ShipY = 80 << SCREEN_MULTI;
+    camera_x = 0;
+    camera_y = 0;
+    ShipX = ShipAbsX = middleWidth;
+    ShipY = ShipAbsY = middleHeight;
     SpdX = SpdY = inclinaison = retourn_anim = 0;
     direction = 1;
 
@@ -117,12 +124,15 @@ void main(void)
         ship_shoot[i].active = 0;
     }
 
-    SCX_REG = camera_x; SCY_REG = camera_y;
+    SCX_REG = 0; SCY_REG = 0;
     // Loop forever
     while(1) {
 		// Game main loop processing goes here
 
         joypad_ex(&joypads);
+        if (joypads.joy0 & J_SELECT) {
+            SpdX = SpdY = 0;
+        }
 
         if (joypads.joy0 & J_UP) {
             SpdY -= SHIP_ACCEL;
@@ -161,9 +171,30 @@ void main(void)
             }
         }
 
-        ShipX += SpdX, ShipY += SpdY;
+        ShipAbsX += SpdX; ShipAbsY += SpdY;
+        // if (camera_x > camera_max_x) camera_x = camera_max_x;
+        // if (camera_x < 0) camera_x = 0;
+        if (((ShipAbsX > middleWidth) && (ShipAbsX < camera_max_x)) || ((ShipAbsY > middleHeight) && (ShipAbsY < camera_max_y))) {
+            camera_x += SpdX; camera_y += SpdY;
+            if (camera_x > camera_max_x) camera_x = camera_max_x;
+            if (camera_x < 0) camera_x = 0;
+            redraw = TRUE;
+        } else {
+            ShipX += SpdX; ShipY += SpdY;
+        }
+        
+        // if (camera_y > camera_max_y) camera_y = camera_max_y;
+        // if (camera_y < 0) camera_y = 0;
+        // if ((camera_y > 0) && (camera_y < camera_max_y)) {
+        //     redraw = TRUE;
+        // } else {
+        //     ShipY += SpdY;
+        // }
+
         tmpX = ShipX >> SCREEN_MULTI;
         tmpY = ShipY >> SCREEN_MULTI;
+
+        EMU_printf("CamX: %d - CamY: %d - ScrX: %d - ScrY: %d - ShpX: %d - ShpY: %d", camera_x>> SCREEN_MULTI, camera_y>> SCREEN_MULTI, ShipAbsX>> SCREEN_MULTI, ShipAbsY>> SCREEN_MULTI, tmpX, tmpY);
 
         if (joypads.joy0 & J_A) {
             if ((next_shoot < MAX_SHOOT_NUM) && (!shoot_delay) && (!retournement)) {
