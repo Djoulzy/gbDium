@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <gbdk/platform.h>
 #include <gbdk/metasprites.h>
+#include "mobs.h"
 #include "../res/setSprites.h"
 #include "../res/backgrounds.h"
 #include "../res/scene1.h"
@@ -65,6 +66,7 @@ void init_gfx() {
     endScrollZoneX = ((Scene1Width * 8) - 80) << SCREEN_MULTI;
     endScrollZoneY = ((Scene1Height * 8) - 72) << SCREEN_MULTI;
 
+    initAliens();
 	// Turn the background map on to make it visible
     SHOW_BKG;
     SHOW_SPRITES;
@@ -275,6 +277,8 @@ void main(void)
 
 		// Done processing, yield CPU and wait for start of next frame
         if (shoot_delay) shoot_delay--;
+
+        alienMoves(camera_x, camera_y);
 
         if (redraw) {        
             wait_vbl_done();
