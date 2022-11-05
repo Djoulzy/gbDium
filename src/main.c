@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <gbdk/platform.h>
 #include <gbdk/metasprites.h>
+#include "def.h"
 #include "mobs.h"
 #include "../res/setSprites.h"
 #include "../res/backgrounds.h"
@@ -16,6 +17,7 @@
 #define MAX_SHIP_SPEED  32
 #define SHIP_ACCEL      2
 #define SCREEN_MULTI    4
+#define SHOOT_SPEED     4
 
 #define MIN(A,B) ((A)<(B)?(A):(B))
 
@@ -32,13 +34,6 @@ uint8_t redraw;
 
 uint16_t startScrollZoneX, startScrollZoneY, endScrollZoneX, endScrollZoneY;
 uint16_t screenWidth, screenHeight;
-
-typedef struct ShipShoot ShipShoot_t;
-struct ShipShoot {
-    uint8_t active;
-    int8_t dir;
-    int16_t x,y;
-};
 
 void init_gfx() {
     // Screen : 160x144
@@ -113,7 +108,7 @@ void main(void)
     int8_t direction, inclinaison;
     uint8_t i, hiwater, next_shoot = 0, shoot_delay = 0;
     uint8_t retournement = FALSE;
-    ShipShoot_t ship_shoot[MAX_SHOOT_NUM];
+    Shoot_t ship_shoot[MAX_SHOOT_NUM];
 
 	init_gfx();
 
@@ -200,12 +195,13 @@ void main(void)
         if (joypads.joy0 & J_A) {
             if ((next_shoot < MAX_SHOOT_NUM) && (!shoot_delay) && (!retournement)) {
                 EMU_printf("SHOOT !");
-                ship_shoot[next_shoot].dir = direction;
+                ship_shoot[next_shoot].spdx = direction * SHOOT_SPEED;
                 ship_shoot[next_shoot].active = 1;
                 ship_shoot[next_shoot].x = tmpX;
                 ship_shoot[next_shoot].y = tmpY + 4;
                 if (direction < 0) set_sprite_prop(SHOOT_SPRITE+next_shoot, S_FLIPX);
                 shoot_delay = SHOOT_DELAY;
+                next_shoot = MAX_SHOOT_NUM;
             }
         }
 
@@ -265,8 +261,7 @@ void main(void)
         next_shoot = 100;
         for (i = 0; i<MAX_SHOOT_NUM; i++) {
             if (ship_shoot[i].active) {
-                if (ship_shoot[i].dir >= 0) ship_shoot[i].x += 4;
-                else ship_shoot[i].x -= 4;
+                ship_shoot[i].x += ship_shoot[i].spdx;
                 move_sprite(SHOOT_SPRITE+i, ship_shoot[i].x, ship_shoot[i].y);
                 if ((ship_shoot[i].x < -9) || (ship_shoot[i].x > 168)) {
                     ship_shoot[i].active = 0;
@@ -278,7 +273,7 @@ void main(void)
 		// Done processing, yield CPU and wait for start of next frame
         if (shoot_delay) shoot_delay--;
 
-        alienMoves(camera_x, camera_y);
+        alienMoves(camera_x, camera_y, ShipAbsX, ShipAbsY);
 
         if (redraw) {        
             wait_vbl_done();
