@@ -9,7 +9,7 @@
 
 BANKREF_EXTERN(sprite)
 
-extern const metasprite_t* const ship_meta[5];
-extern const metasprite_t* const ship_retournement[6];
+extern const metasprite_t* const ship_meta[];
+extern const metasprite_t* const ship_retournement[];
 
 #endif

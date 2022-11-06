@@ -7,8 +7,8 @@
  Info:
    Section       : 
    Bank          : 0
-   Map size      : 32 x 32
-   Tile set      : Z:\Users\jules\gbdk\Projects\gbDium\assets\background.gbr
+   Map size      : 128 x 32
+   Tile set      : scene_tiles.gbr
    Plane count   : 1 plane (8 bits)
    Plane order   : Tiles are continues
    Tile offset   : 0
@@ -18,7 +18,7 @@
 
 */
 
-#define Scene1Width 32
+#define Scene1Width 128
 #define Scene1Height 32
 #define Scene1Bank 0
 

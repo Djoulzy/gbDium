@@ -4,38 +4,36 @@
 #include <stdlib.h>
 #include <gbdk/platform.h>
 #include <gbdk/metasprites.h>
+#include "def.h"
+#include "mobs.h"
 #include "../res/setSprites.h"
-#include "../res/backgrounds.h"
+#include "../res/scene_tiles.h"
 #include "../res/scene1.h"
 
 #define SHIP_SPRITE     0
 #define SHOOT_SPRITE    4
 #define MAX_SHOOT_NUM   6
 #define SHOOT_DELAY     10
-#define MAX_SHIP_SPEED  16
+#define MAX_SHIP_SPEED  32
 #define SHIP_ACCEL      2
 #define SCREEN_MULTI    4
+#define SHOOT_SPEED     4
 
 #define MIN(A,B) ((A)<(B)?(A):(B))
 
 joypads_t joypads;
 
-uint16_t camera_max_x, camera_max_y;
+int16_t camera_max_x, camera_max_y;
 // current and old positions of the camera in pixels
-uint16_t camera_x, camera_y, old_camera_x, old_camera_y;
+int16_t camera_x, camera_y;
+uint16_t old_camera_x, old_camera_y;
 // current and old position of the map in tiles
 uint8_t map_pos_x, map_pos_y, old_map_pos_x, old_map_pos_y;
 // redraw flag, indicates that camera position was changed
 uint8_t redraw;
 
-uint16_t screenMaxWidth, screenMaxHeight;
-
-typedef struct ShipShoot ShipShoot_t;
-struct ShipShoot {
-    uint8_t active;
-    int8_t dir;
-    int16_t x,y;
-};
+uint16_t startScrollZoneX, startScrollZoneY, endScrollZoneX, endScrollZoneY;
+uint16_t screenWidth, screenHeight;
 
 void init_gfx() {
     // Screen : 160x144
@@ -43,23 +41,27 @@ void init_gfx() {
     DISPLAY_OFF;
 
     // Load Background tiles and then map
-    set_bkg_data(0, 10, backgrounds);
+    set_bkg_data(0, 10, scene_tiles);
     // set_bkg_tiles(0, 0, 32, 32, Scene1);
     set_sprite_data(0, 45, Ship);
 
-    camera_max_y = (Scene1Height - 18) * 8;
-    camera_max_x = (Scene1Width - 20) * 8;
+    camera_max_y = ((Scene1Height - 18) * 8) << SCREEN_MULTI;
+    camera_max_x = ((Scene1Width - 20) * 8) << SCREEN_MULTI;
 
     map_pos_x = map_pos_y = 0; 
     old_map_pos_x = old_map_pos_y = 255;
     set_bkg_submap(map_pos_x, map_pos_y, 20, 18, Scene1, Scene1Width);
 
-    camera_x = camera_y = 0;
-    old_camera_x = camera_x; old_camera_y = camera_y;
+    old_camera_x = camera_x = 0; old_camera_y = camera_y = 0;
 
-    screenMaxWidth = 160 << SCREEN_MULTI;
-    screenMaxHeight = 144 << SCREEN_MULTI;
+    screenWidth = (Scene1Width * 8) << SCREEN_MULTI;
+    screenHeight = (Scene1Height * 8) << SCREEN_MULTI;
+    startScrollZoneX = 80 << SCREEN_MULTI;
+    startScrollZoneY = 72 << SCREEN_MULTI;
+    endScrollZoneX = ((Scene1Width * 8) - 80) << SCREEN_MULTI;
+    endScrollZoneY = ((Scene1Height * 8) - 72) << SCREEN_MULTI;
 
+    initAliens();
 	// Turn the background map on to make it visible
     SHOW_BKG;
     SHOW_SPRITES;
@@ -67,12 +69,17 @@ void init_gfx() {
 }
 
 void set_camera(const uint8_t * scene, uint16_t sceneWidth, uint16_t sceneHeight) {
+    uint16_t tmpX, tmpY;
+
+    tmpX = camera_x >> SCREEN_MULTI;
+    tmpY = camera_y >> SCREEN_MULTI;
+
     // update hardware scroll position
-    SCY_REG = camera_y; SCX_REG = camera_x; 
+    SCY_REG = tmpY; SCX_REG = tmpX; 
     // up or down
-    map_pos_y = (uint8_t)(camera_y >> 3u);
+    map_pos_y = (uint8_t)(tmpY >> 3u);
     if (map_pos_y != old_map_pos_y) { 
-        if (camera_y < old_camera_y) {
+        if (tmpY < old_camera_y) {
             set_bkg_submap(map_pos_x, map_pos_y, MIN(21u, sceneWidth-map_pos_x), 1, scene, sceneWidth);
         } else {
             if ((sceneHeight - 18u) > map_pos_y) set_bkg_submap(map_pos_x, map_pos_y + 18u, MIN(21u, sceneWidth-map_pos_x), 1, scene, sceneWidth);     
@@ -80,9 +87,9 @@ void set_camera(const uint8_t * scene, uint16_t sceneWidth, uint16_t sceneHeight
         old_map_pos_y = map_pos_y; 
     }
     // left or right
-    map_pos_x = (uint8_t)(camera_x >> 3u);
+    map_pos_x = (uint8_t)(tmpX >> 3u);
     if (map_pos_x != old_map_pos_x) {
-        if (camera_x < old_camera_x) {
+        if (tmpX < old_camera_x) {
             set_bkg_submap(map_pos_x, map_pos_y, 1, MIN(19u, sceneHeight - map_pos_y), scene, sceneWidth);     
         } else {
             if ((sceneWidth - 20u) > map_pos_x) set_bkg_submap(map_pos_x + 20u, map_pos_y, 1, MIN(19u, sceneHeight - map_pos_y), scene, sceneWidth);     
@@ -90,25 +97,26 @@ void set_camera(const uint8_t * scene, uint16_t sceneWidth, uint16_t sceneHeight
         old_map_pos_x = map_pos_x;
     }
     // set old camera position to current camera position
-    old_camera_x = camera_x, old_camera_y = camera_y;
+    old_camera_x = tmpX, old_camera_y = tmpY;
 }
 
 void main(void)
 {
-    uint16_t ShipX, ShipY, tmpX, tmpY;
+    int16_t ShipX, ShipY, tmpX, tmpY, ShipAbsX, ShipAbsY;
     int16_t SpdX, SpdY;
     uint16_t retourn_anim;
     int8_t direction, inclinaison;
     uint8_t i, hiwater, next_shoot = 0, shoot_delay = 0;
     uint8_t retournement = FALSE;
-    ShipShoot_t ship_shoot[MAX_SHOOT_NUM];
+    Shoot_t ship_shoot[MAX_SHOOT_NUM];
 
 	init_gfx();
 
     joypad_init(1, &joypads);
 
-    ShipX = 88 << SCREEN_MULTI;
-    ShipY = 80 << SCREEN_MULTI;
+
+    ShipX = ShipAbsX = startScrollZoneX;
+    ShipY = ShipAbsY = startScrollZoneY;
     SpdX = SpdY = inclinaison = retourn_anim = 0;
     direction = 1;
 
@@ -117,23 +125,14 @@ void main(void)
         ship_shoot[i].active = 0;
     }
 
-    SCX_REG = camera_x; SCY_REG = camera_y;
+    SCX_REG = 0; SCY_REG = 0;
     // Loop forever
     while(1) {
 		// Game main loop processing goes here
 
         joypad_ex(&joypads);
-
-        if (joypads.joy0 & J_A) {
-            if ((next_shoot < MAX_SHOOT_NUM) && (!shoot_delay) && (!retournement)) {
-                EMU_printf("SHOOT !");
-                ship_shoot[next_shoot].dir = direction;
-                ship_shoot[next_shoot].active = 1;
-                ship_shoot[next_shoot].x = ShipX >> SCREEN_MULTI;
-                ship_shoot[next_shoot].y = (ShipY >> SCREEN_MULTI) + 4;
-                if (direction < 0) set_sprite_prop(SHOOT_SPRITE+next_shoot, S_FLIPX);
-                shoot_delay = SHOOT_DELAY;
-            }
+        if (joypads.joy0 & J_SELECT) {
+            SpdX = SpdY = 0;
         }
 
         if (joypads.joy0 & J_UP) {
@@ -173,9 +172,38 @@ void main(void)
             }
         }
 
-        ShipX += SpdX, ShipY += SpdY;
-        tmpX = ShipX >> SCREEN_MULTI;
-        tmpY = ShipY >> SCREEN_MULTI;
+        ShipAbsX += SpdX; ShipAbsY += SpdY;
+
+        if ((ShipAbsX >= startScrollZoneX) && (ShipAbsX <= endScrollZoneX)) {
+            camera_x += SpdX;
+            if (camera_x > camera_max_x) camera_x = camera_max_x;
+            if (camera_x < 0) camera_x = 0;
+            redraw = TRUE;
+        } else ShipX += SpdX;
+        
+        if ((ShipAbsY >= startScrollZoneY) && (ShipAbsY <= endScrollZoneY)) {
+            camera_y += SpdY;
+            // EMU_printf("CamX: %d (%d) - CamY: %d (%d) - AbsX: %d - AbsY: %d - ShpX: %d - ShpY: %d", camera_x, camera_max_x, camera_y, camera_max_y, ShipAbsX, ShipAbsY, tmpX, tmpY);
+            if (camera_y > camera_max_y) camera_y = camera_max_y;
+            if (camera_y < 0) camera_y = 0;
+            redraw = TRUE;
+        } else ShipY += SpdY;
+        
+        tmpX = (ShipX >> SCREEN_MULTI) + 8;
+        tmpY = (ShipY >> SCREEN_MULTI) + 8;
+
+        if (joypads.joy0 & J_A) {
+            if ((next_shoot < MAX_SHOOT_NUM) && (!shoot_delay) && (!retournement)) {
+                EMU_printf("SHOOT !");
+                ship_shoot[next_shoot].spdx = direction * SHOOT_SPEED;
+                ship_shoot[next_shoot].active = 1;
+                ship_shoot[next_shoot].x = tmpX;
+                ship_shoot[next_shoot].y = tmpY + 4;
+                if (direction < 0) set_sprite_prop(SHOOT_SPRITE+next_shoot, S_FLIPX);
+                shoot_delay = SHOOT_DELAY;
+                next_shoot = MAX_SHOOT_NUM;
+            }
+        }
 
         if (retournement) {
             if (direction >= 0)
@@ -190,26 +218,30 @@ void main(void)
                 SpdX = SHIP_ACCEL * direction;
             }
         } else {
-            if (tmpX > 160)  {
-                retournement = TRUE;
-                retourn_anim = 0;
-                SpdX = 0;
-                ShipX = 160 << SCREEN_MULTI;
-            }
-            if (tmpX < 16)  {
-                retournement = TRUE;
-                retourn_anim = 0;
-                SpdX = 0;
-                ShipX = 16 << SCREEN_MULTI;
-            }
-            if (tmpY < 16) {
-                ShipY = 16 << SCREEN_MULTI;
-                SpdY = 0;
-            }
-            if (tmpY > 144) {
-                ShipY = 144 << SCREEN_MULTI;
-                SpdY = 0;
-            }
+            // if (!redraw) {
+                if (tmpX >= 160)  {
+                    retournement = TRUE;
+                    retourn_anim = 0;
+                    SpdX = 0;
+                    ShipX = 152 << SCREEN_MULTI;
+                    ShipAbsX = screenWidth;
+                }
+                if (tmpX < 16)  {
+                    retournement = TRUE;
+                    retourn_anim = 0;
+                    SpdX = 0;
+                    ShipAbsX = ShipX = 8 << SCREEN_MULTI;
+                }
+                if (tmpY < 16) {
+                    SpdY = 0;
+                    ShipAbsY = ShipY = 8 << SCREEN_MULTI;
+                }
+                if (tmpY >= 144) {
+                    SpdY = 0;
+                    ShipY = 136 << SCREEN_MULTI;
+                    ShipAbsY = screenHeight;
+                }
+            // }
 
             if (direction >= 0) {
                 if (inclinaison >= 0)
@@ -229,8 +261,7 @@ void main(void)
         next_shoot = 100;
         for (i = 0; i<MAX_SHOOT_NUM; i++) {
             if (ship_shoot[i].active) {
-                if (ship_shoot[i].dir >= 0) ship_shoot[i].x += 4;
-                else ship_shoot[i].x -= 4;
+                ship_shoot[i].x += ship_shoot[i].spdx;
                 move_sprite(SHOOT_SPRITE+i, ship_shoot[i].x, ship_shoot[i].y);
                 if ((ship_shoot[i].x < -9) || (ship_shoot[i].x > 168)) {
                     ship_shoot[i].active = 0;
@@ -242,7 +273,9 @@ void main(void)
 		// Done processing, yield CPU and wait for start of next frame
         if (shoot_delay) shoot_delay--;
 
-        if (redraw) {
+        alienMoves(camera_x, camera_y, ShipAbsX, ShipAbsY);
+
+        if (redraw) {        
             wait_vbl_done();
             set_camera(Scene1, Scene1Width, Scene1Height);
             redraw = FALSE;

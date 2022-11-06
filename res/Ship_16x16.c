@@ -12,9 +12,9 @@
   Tile size            : 8 x 8
   Tiles                : 0 to 44
 
-  Palette colors       : None.
+  Palette colors       : Included.
   SGB Palette          : None.
-  CGB Palette          : None.
+  CGB Palette          : Constant per entry.
 
   Convert to metatiles : No.
 

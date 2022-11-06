@@ -1,6 +1,6 @@
 /*
 
- BACKGROUNDS.H
+ ALIEN_TILES.H
 
  Include File.
 
@@ -10,7 +10,7 @@
   Compression          : None.
   Counter              : None.
   Tile size            : 8 x 8
-  Tiles                : 0 to 9
+  Tiles                : 0 to 8
 
   Palette colors       : None.
   SGB Palette          : None.
@@ -24,8 +24,8 @@
 
 
 /* Bank of tiles. */
-#define backgroundsBank 0
+#define alien_tilesBank 0
 /* Start of tile array. */
-extern unsigned char backgrounds[];
+extern unsigned char alien_tiles[];
 
-/* End of BACKGROUNDS.H */
+/* End of ALIEN_TILES.H */
