@@ -10,6 +10,5 @@
 BANKREF_EXTERN(sprite)
 
 extern const metasprite_t* const ship_meta[];
-extern const metasprite_t* const ship_retournement[];
 
 #endif

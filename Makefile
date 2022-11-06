@@ -29,9 +29,9 @@ CSOURCES    = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreac
 ASMSOURCES  = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.s)))
 OBJS		= $(CSOURCES:%.c=$(OBJDIR)/%.o) $(ASMSOURCES:%.s=$(OBJDIR)/%.o)
 
-all: clean default
+all: default
 
-test: default
+test: clean default
 # $(RUNNER) $(BINS) &
 # open $(BINS) -a $(RUNNER)
 	/usr/local/bin/wine64 $(RUNNER) $(BINS) &
