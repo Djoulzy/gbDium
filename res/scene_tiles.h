@@ -1,6 +1,6 @@
 /*
 
- BACKGROUNDS.H
+ SCENE_TILES.H
 
  Include File.
 
@@ -24,8 +24,8 @@
 
 
 /* Bank of tiles. */
-#define backgroundsBank 0
+#define scene_tilesBank 0
 /* Start of tile array. */
-extern unsigned char backgrounds[];
+extern unsigned char scene_tiles[];
 
-/* End of BACKGROUNDS.H */
+/* End of SCENE_TILES.H */

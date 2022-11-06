@@ -1,6 +1,6 @@
 /*
 
- ALIENS.H
+ ALIEN_TILES.H
 
  Include File.
 
@@ -24,8 +24,8 @@
 
 
 /* Bank of tiles. */
-#define aliensBank 0
+#define alien_tilesBank 0
 /* Start of tile array. */
-extern unsigned char aliens[];
+extern unsigned char alien_tiles[];
 
-/* End of ALIENS.H */
+/* End of ALIEN_TILES.H */

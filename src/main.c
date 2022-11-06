@@ -7,7 +7,7 @@
 #include "def.h"
 #include "mobs.h"
 #include "../res/setSprites.h"
-#include "../res/backgrounds.h"
+#include "../res/scene_tiles.h"
 #include "../res/scene1.h"
 
 #define SHIP_SPRITE     0
@@ -41,7 +41,7 @@ void init_gfx() {
     DISPLAY_OFF;
 
     // Load Background tiles and then map
-    set_bkg_data(0, 10, backgrounds);
+    set_bkg_data(0, 10, scene_tiles);
     // set_bkg_tiles(0, 0, 32, 32, Scene1);
     set_sprite_data(0, 45, Ship);
 

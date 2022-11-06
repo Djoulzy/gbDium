@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <rand.h>
 #include "def.h"
-#include "../res/aliens.h"
+#include "../res/alien_tiles.h"
 
 #define NB_ALIENS       5
 #define ALIENS_SPRITE   10
@@ -34,7 +34,7 @@ const metasprite_t* const alienFrames[2] = {
 void initAliens(void) {
     uint8_t i;
 
-    set_sprite_data(45, 9, aliens);
+    set_sprite_data(45, 9, alien_tiles);
 
     initrand(DIV_REG);
     for (i = 0; i<NB_ALIENS; i++) {
