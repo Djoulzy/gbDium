@@ -201,22 +201,22 @@ void main(void)
         }
         // hide_sprites_range(hiwater, 40);
 
-        next_shoot = 100;
-        for (i = 0; i<MAX_SHOOT_NUM; i++) {
-            if (ship_shoot[i].active) {
-                ship_shoot[i].x += ship_shoot[i].spdx;
-                move_sprite(SHOOT_SPRITE+i, ship_shoot[i].x, ship_shoot[i].y);
-                if ((ship_shoot[i].x < -9) || (ship_shoot[i].x > 168)) {
-                    ship_shoot[i].active = 0;
-                    next_shoot = i;
-                }
-            } else next_shoot = i;
-        }
+        // next_shoot = 100;
+        // for (i = 0; i<MAX_SHOOT_NUM; i++) {
+        //     if (ship_shoot[i].active) {
+        //         ship_shoot[i].x += ship_shoot[i].spdx;
+        //         move_sprite(SHOOT_SPRITE+i, ship_shoot[i].x, ship_shoot[i].y);
+        //         if ((ship_shoot[i].x < -9) || (ship_shoot[i].x > 168)) {
+        //             ship_shoot[i].active = 0;
+        //             next_shoot = i;
+        //         }
+        //     } else next_shoot = i;
+        // }
 
 		// Done processing, yield CPU and wait for start of next frame
         if (shoot_delay) shoot_delay--;
 
-        alienMoves(scene->camera_x, scene->camera_y, ShipAbsX, ShipAbsY);
+        // alienMoves(scene->camera_x, scene->camera_y, ShipAbsX, ShipAbsY);
 
         if (scene->redraw) {        
             wait_vbl_done();
