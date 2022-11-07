@@ -3,8 +3,17 @@
 
 #include <gbdk/metasprites.h>
 
-#define SCREEN_MULTI        4
 #define MIN(A,B) ((A)<(B)?(A):(B))
+
+#define LEFT_BORDER_LIMIT       0
+#define RIGHT_BORDER_LIMIT      160
+#define UP_BORDER_LIMIT         0
+#define DOWN_BORDER_LIMIT       144
+
+#define OUT_LEFT    2
+#define OUT_RIGHT   4
+#define OUT_UP      8
+#define OUT_DOWN    16
 
 typedef struct {
     uint8_t active;
@@ -35,8 +44,8 @@ typedef struct {
 } Entity_t;
 
 typedef struct {
-    const uint8_t* sceneData;
-    uint8_t sceneW, sceneH;
+    const uint8_t* sceneData;                   // Map data
+    uint8_t sceneW, sceneH;                     // map size in tiles
     int16_t camera_max_x, camera_max_y;
     int16_t camera_x, camera_y;
     uint16_t old_camera_x, old_camera_y;
@@ -49,10 +58,14 @@ typedef struct {
 } Scene_t;
 
 extern Shoot_t* newShoot(uint8_t);
-extern Entity_t* newEntity(const metasprite_t**);
-extern Scene_t* newScene(const uint8_t*, uint8_t, uint8_t);
+extern void setupEntity(Entity_t*, const metasprite_t**, int16_t, int16_t);
+extern void setupScene(Scene_t*, const uint8_t*, uint8_t, uint8_t);
 extern void setCamera(Scene_t*);
+extern void updateView(Scene_t*);
+extern void setCameraStick(Entity_t*);
 extern void updateEntityPos(Scene_t*, Entity_t*);
+extern int8_t isOutOfScene(Scene_t*, Entity_t*);
 extern uint8_t isVisible(Entity_t*);
+
 
 #endif
