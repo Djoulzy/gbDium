@@ -46,12 +46,13 @@ void init_gfx() {
 
 void main(void)
 {
-    int16_t visibleX, visibleY;
     uint16_t retourn_anim;
     int8_t direction, inclinaison;
     uint8_t i, next_shoot = 0, shoot_delay = 0;
     uint8_t retournement = FALSE;
     Shoot_t ship_shoot[MAX_SHOOT_NUM];
+    Shoot_t* test;
+    Shoot_t** tmp;
 
 	init_gfx();
 
@@ -60,11 +61,19 @@ void main(void)
     inclinaison = retourn_anim = 0;
     direction = 1;
 
-    // for (i = 0; i<MAX_SHOOT_NUM; i++) {
-    //     set_sprite_tile(SHOOT_SPRITE+i, 44);
-    //     ship_shoot[i].active = 0;
-    // }
+    for (i = 0; i<MAX_SHOOT_NUM; i++) {
+        setupShoot(&(ship_shoot[i]), 44);
+    }
+    assignShootToEntity(&player, &ship_shoot);
 
+    tmp = &ship_shoot;
+    test = *tmp;
+    // test[0].spriteNum = 12;
+    EMU_printf("shoots: %u", &((ship_shoot[1]).spriteNum));
+    EMU_printf("shoots: %u", &((*tmp[1]).spriteNum));
+    EMU_printf("shoots: %u", &((*player.shoots[1]).spriteNum));
+    // EMU_printf("shoots: %d", sizeof(Shoot_t));
+    
     SCX_REG = 0; SCY_REG = 0;
     // Loop forever
     while(1) {

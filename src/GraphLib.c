@@ -3,17 +3,17 @@
 #include "settings.h"
 #include "GraphLib.h"
 
-uint8_t spritesCount = 10;
+uint8_t spritesCount = 0;
 
-Shoot_t* newShoot(uint8_t tileNum) {
-    Shoot_t tmp;
-
-    tmp.spriteNum = spritesCount;
+void setupShoot(Shoot_t* shoot, uint8_t tileNum) {
+    shoot->spriteNum = spritesCount;
+    // EMU_printf("new sprite: %d", shoot->spriteNum);
     spritesCount++;
-    tmp.active = FALSE;
-    set_sprite_tile(tmp.spriteNum, tileNum);
-
-    return &tmp;
+    shoot->active = FALSE;
+    shoot->spdx = shoot->spdy = 0;
+    shoot->dirx = shoot->diry = 0;
+    shoot->x = shoot->y = 0;
+    set_sprite_tile(shoot->spriteNum, tileNum);
 }
 
 void setupEntity(Entity_t* entity, const metasprite_t** frames, int16_t sceneX, int16_t sceneY) {
@@ -25,7 +25,13 @@ void setupEntity(Entity_t* entity, const metasprite_t** frames, int16_t sceneX, 
     entity->speedX = entity->speedY = 0;
     entity->animStep = 0;
     entity->frames = frames;
-    entity->shoot = NULL;
+    entity->shoots = NULL;
+}
+
+void assignShootToEntity(Entity_t* entity, Shoot_t** shoots) {
+    entity->shoots = shoots;
+    // EMU_printf("shoots: %d", *(entity->shoots)[0]->spriteNum);
+    // EMU_printf("shoots: %u", sizeof *(entity->shoots) / sizeof *(entity->shoots[0]));
 }
 
 void setupScene(Scene_t* tmp, const uint8_t* sceneData, uint8_t sceneW, uint8_t sceneH) {

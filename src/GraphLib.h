@@ -39,8 +39,8 @@ typedef struct {
     int16_t sceneX, sceneY;
     int16_t visibleX, visibleY;
     uint8_t animStep;
-    Shoot_t* shoot;
     const metasprite_t** frames;
+    Shoot_t** shoots;
 } Entity_t;
 
 typedef struct {
@@ -57,8 +57,9 @@ typedef struct {
     uint16_t screenWidth, screenHeight;
 } Scene_t;
 
-extern Shoot_t* newShoot(uint8_t);
+extern void setupShoot(Shoot_t*, uint8_t);
 extern void setupEntity(Entity_t*, const metasprite_t**, int16_t, int16_t);
+extern void assignShootToEntity(Entity_t*, Shoot_t**);
 extern void setupScene(Scene_t*, const uint8_t*, uint8_t, uint8_t);
 extern void setCamera(Scene_t*);
 extern void updateView(Scene_t*);
