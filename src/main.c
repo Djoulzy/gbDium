@@ -24,6 +24,7 @@
 joypads_t joypads;
 Scene_t scene;
 Entity_t player;
+Shoot_t* ship_shoot[MAX_SHOOT_NUM];
 
 void init_gfx() {
     SPRITES_8x8;
@@ -50,9 +51,6 @@ void main(void)
     int8_t direction, inclinaison;
     uint8_t i, next_shoot = 0, shoot_delay = 0;
     uint8_t retournement = FALSE;
-    Shoot_t ship_shoot[MAX_SHOOT_NUM];
-    Shoot_t* test;
-    Shoot_t** tmp;
 
 	init_gfx();
 
@@ -62,17 +60,13 @@ void main(void)
     direction = 1;
 
     for (i = 0; i<MAX_SHOOT_NUM; i++) {
-        setupShoot(&(ship_shoot[i]), 44);
+        ship_shoot[i] = allocShoot(44);
+        // setupShoot(ship_shoot[i], 44);
     }
-    assignShootToEntity(&player, &ship_shoot);
+    assignShootToEntity(&player, ship_shoot, MAX_SHOOT_NUM);
 
-    tmp = &ship_shoot;
-    test = *tmp;
-    // test[0].spriteNum = 12;
-    EMU_printf("shoots: %u", &((ship_shoot[1]).spriteNum));
-    EMU_printf("shoots: %u", &((*tmp[1]).spriteNum));
-    EMU_printf("shoots: %u", &((*player.shoots[1]).spriteNum));
-    // EMU_printf("shoots: %d", sizeof(Shoot_t));
+    EMU_printf("shoots: %u", ship_shoot[0]->spriteNum);
+    EMU_printf("shoots: %u", player.shoots[0]->spriteNum);
     
     SCX_REG = 0; SCY_REG = 0;
     // Loop forever
@@ -127,18 +121,21 @@ void main(void)
             retourn_anim = 0;
         };
 
-        // if (joypads.joy0 & J_A) {
-        //     if ((next_shoot < MAX_SHOOT_NUM) && (!shoot_delay) && (!retournement)) {
-        //         EMU_printf("SHOOT !");
-        //         ship_shoot[next_shoot].spdx = direction * SHOOT_SPEED;
-        //         ship_shoot[next_shoot].active = 1;
-        //         ship_shoot[next_shoot].x = tmpX;
-        //         ship_shoot[next_shoot].y = tmpY + 4;
-        //         if (direction < 0) set_sprite_prop(SHOOT_SPRITE+next_shoot, S_FLIPX);
-        //         shoot_delay = SHOOT_DELAY;
-        //         next_shoot = MAX_SHOOT_NUM;
-        //     }
-        // }
+        if (joypads.joy0 & J_A) {
+            if (!retournement) {
+                entityFireShoot(&player)
+            }
+            // if ((next_shoot < MAX_SHOOT_NUM) && (!shoot_delay) && (!retournement)) {
+            //     EMU_printf("SHOOT !");
+            //     ship_shoot[next_shoot].spdx = direction * SHOOT_SPEED;
+            //     ship_shoot[next_shoot].active = 1;
+            //     ship_shoot[next_shoot].x = tmpX;
+            //     ship_shoot[next_shoot].y = tmpY + 4;
+            //     if (direction < 0) set_sprite_prop(SHOOT_SPRITE+next_shoot, S_FLIPX);
+            //     shoot_delay = SHOOT_DELAY;
+            //     next_shoot = MAX_SHOOT_NUM;
+            // }
+        }
 
         if (retournement) {
             if (direction >= 0)

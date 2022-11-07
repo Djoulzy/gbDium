@@ -5,11 +5,6 @@
 
 #define MIN(A,B) ((A)<(B)?(A):(B))
 
-#define LEFT_BORDER_LIMIT       0
-#define RIGHT_BORDER_LIMIT      160
-#define UP_BORDER_LIMIT         0
-#define DOWN_BORDER_LIMIT       144
-
 #define OUT_LEFT    2
 #define OUT_RIGHT   4
 #define OUT_UP      8
@@ -40,6 +35,9 @@ typedef struct {
     int16_t visibleX, visibleY;
     uint8_t animStep;
     const metasprite_t** frames;
+    uint8_t nb_shoots;
+    uint8_t availableShoot;
+    uint8_t shootDelay;
     Shoot_t** shoots;
 } Entity_t;
 
@@ -57,9 +55,10 @@ typedef struct {
     uint16_t screenWidth, screenHeight;
 } Scene_t;
 
+extern Shoot_t* allocShoot(uint8_t);
 extern void setupShoot(Shoot_t*, uint8_t);
 extern void setupEntity(Entity_t*, const metasprite_t**, int16_t, int16_t);
-extern void assignShootToEntity(Entity_t*, Shoot_t**);
+extern void assignShootToEntity(Entity_t*, Shoot_t**, uint8_t);
 extern void setupScene(Scene_t*, const uint8_t*, uint8_t, uint8_t);
 extern void setCamera(Scene_t*);
 extern void updateView(Scene_t*);
@@ -67,6 +66,7 @@ extern void setCameraStick(Entity_t*);
 extern void updateEntityPos(Scene_t*, Entity_t*);
 extern int8_t isOutOfScene(Scene_t*, Entity_t*);
 extern uint8_t isVisible(Entity_t*);
+extern void destroyEntity(Entity_t*);
 
 
 #endif

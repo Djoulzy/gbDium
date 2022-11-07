@@ -1,9 +1,23 @@
 #include <gb/gb.h>
+#include <stdlib.h>
 #include <gbdk/emu_debug.h>
 #include "settings.h"
 #include "GraphLib.h"
 
 uint8_t spritesCount = 0;
+
+Shoot_t* allocShoot(uint8_t tileNum) {
+    Shoot_t* shoot = malloc(sizeof(Shoot_t));
+    shoot->spriteNum = spritesCount;
+    // EMU_printf("new sprite: %d", shoot->spriteNum);
+    spritesCount++;
+    shoot->active = FALSE;
+    shoot->spdx = shoot->spdy = 0;
+    shoot->dirx = shoot->diry = 0;
+    shoot->x = shoot->y = 0;
+    set_sprite_tile(shoot->spriteNum, tileNum);
+    return shoot;
+}
 
 void setupShoot(Shoot_t* shoot, uint8_t tileNum) {
     shoot->spriteNum = spritesCount;
@@ -28,10 +42,9 @@ void setupEntity(Entity_t* entity, const metasprite_t** frames, int16_t sceneX, 
     entity->shoots = NULL;
 }
 
-void assignShootToEntity(Entity_t* entity, Shoot_t** shoots) {
+void assignShootToEntity(Entity_t* entity, Shoot_t** shoots, uint8_t size) {
     entity->shoots = shoots;
-    // EMU_printf("shoots: %d", *(entity->shoots)[0]->spriteNum);
-    // EMU_printf("shoots: %u", sizeof *(entity->shoots) / sizeof *(entity->shoots[0]));
+    entity->nb_shoots = size;
 }
 
 void setupScene(Scene_t* tmp, const uint8_t* sceneData, uint8_t sceneW, uint8_t sceneH) {
@@ -173,4 +186,8 @@ void updateView(Scene_t* scene) {
         setCamera(scene);
         scene->redraw = FALSE;
     } else wait_vbl_done();
+}
+
+void destroyEntity(Entity_t* entity) {
+    // ToDO: free shoots
 }
