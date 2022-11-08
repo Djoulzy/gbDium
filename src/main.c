@@ -24,7 +24,7 @@
 joypads_t joypads;
 Scene_t scene;
 Entity_t player;
-Shoot_t* ship_shoot[MAX_SHOOT_NUM];
+Bullet_t* ship_shoot[MAX_SHOOT_NUM];
 
 void init_gfx() {
     SPRITES_8x8;
@@ -60,13 +60,13 @@ void main(void)
     direction = 1;
 
     for (i = 0; i<MAX_SHOOT_NUM; i++) {
-        ship_shoot[i] = allocShoot(44);
+        ship_shoot[i] = allocBullet(44);
         // setupShoot(ship_shoot[i], 44);
     }
-    assignShootToEntity(&player, ship_shoot, MAX_SHOOT_NUM);
+    assignBulletsToEntity(&player, ship_shoot, MAX_SHOOT_NUM);
 
     EMU_printf("shoots: %u", ship_shoot[0]->spriteNum);
-    EMU_printf("shoots: %u", player.shoots[0]->spriteNum);
+    EMU_printf("shoots: %u", player.bullets[0]->spriteNum);
     
     SCX_REG = 0; SCY_REG = 0;
     // Loop forever
@@ -123,7 +123,7 @@ void main(void)
 
         if (joypads.joy0 & J_A) {
             if (!retournement) {
-                entityFireShoot(&player)
+                entityShoot(&player);
             }
             // if ((next_shoot < MAX_SHOOT_NUM) && (!shoot_delay) && (!retournement)) {
             //     EMU_printf("SHOOT !");

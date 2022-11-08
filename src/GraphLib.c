@@ -6,28 +6,16 @@
 
 uint8_t spritesCount = 0;
 
-Shoot_t* allocShoot(uint8_t tileNum) {
-    Shoot_t* shoot = malloc(sizeof(Shoot_t));
-    shoot->spriteNum = spritesCount;
+Bullet_t* allocBullet(uint8_t tileNum) {
+    Bullet_t* bullet = malloc(sizeof(Bullet_t));
+    bullet->spriteNum = spritesCount;
     // EMU_printf("new sprite: %d", shoot->spriteNum);
     spritesCount++;
-    shoot->active = FALSE;
-    shoot->spdx = shoot->spdy = 0;
-    shoot->dirx = shoot->diry = 0;
-    shoot->x = shoot->y = 0;
-    set_sprite_tile(shoot->spriteNum, tileNum);
-    return shoot;
-}
-
-void setupShoot(Shoot_t* shoot, uint8_t tileNum) {
-    shoot->spriteNum = spritesCount;
-    // EMU_printf("new sprite: %d", shoot->spriteNum);
-    spritesCount++;
-    shoot->active = FALSE;
-    shoot->spdx = shoot->spdy = 0;
-    shoot->dirx = shoot->diry = 0;
-    shoot->x = shoot->y = 0;
-    set_sprite_tile(shoot->spriteNum, tileNum);
+    bullet->active = FALSE;
+    bullet->speedX = bullet->speedY = 0;
+    bullet->sceneX = bullet->sceneY = 0;
+    set_sprite_tile(bullet->spriteNum, tileNum);
+    return bullet;
 }
 
 void setupEntity(Entity_t* entity, const metasprite_t** frames, int16_t sceneX, int16_t sceneY) {
@@ -39,11 +27,11 @@ void setupEntity(Entity_t* entity, const metasprite_t** frames, int16_t sceneX, 
     entity->speedX = entity->speedY = 0;
     entity->animStep = 0;
     entity->frames = frames;
-    entity->shoots = NULL;
+    entity->bullets = NULL;
 }
 
-void assignShootToEntity(Entity_t* entity, Shoot_t** shoots, uint8_t size) {
-    entity->shoots = shoots;
+void assignBulletsToEntity(Entity_t* entity, Bullet_t** bullets, uint8_t size) {
+    entity->bullets = bullets;
     entity->nb_shoots = size;
 }
 

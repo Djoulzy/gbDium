@@ -13,18 +13,10 @@
 typedef struct {
     uint8_t active;
     uint8_t spriteNum;
-    int8_t spdx, spdy;
-    int16_t dirx, diry;
-    int16_t x,y;
-} Shoot_t;
-
-typedef struct {
-    uint8_t active;
-    int8_t spdx, spdy;
-    int16_t x,y;
-    uint8_t animStep;
-    Shoot_t shoot;
-} Aliens_t;
+    int8_t speedX, speedY;
+    int16_t sceneX, sceneY;
+    uint8_t props;
+} Bullet_t;
 
 typedef struct {
     uint8_t active;
@@ -38,7 +30,7 @@ typedef struct {
     uint8_t nb_shoots;
     uint8_t availableShoot;
     uint8_t shootDelay;
-    Shoot_t** shoots;
+    Bullet_t** bullets;
 } Entity_t;
 
 typedef struct {
@@ -55,15 +47,15 @@ typedef struct {
     uint16_t screenWidth, screenHeight;
 } Scene_t;
 
-extern Shoot_t* allocShoot(uint8_t);
-extern void setupShoot(Shoot_t*, uint8_t);
+extern Bullet_t* allocBullet(uint8_t);
 extern void setupEntity(Entity_t*, const metasprite_t**, int16_t, int16_t);
-extern void assignShootToEntity(Entity_t*, Shoot_t**, uint8_t);
+extern void assignBulletsToEntity(Entity_t*, Bullet_t**, uint8_t);
 extern void setupScene(Scene_t*, const uint8_t*, uint8_t, uint8_t);
 extern void setCamera(Scene_t*);
 extern void updateView(Scene_t*);
 extern void setCameraStick(Entity_t*);
 extern void updateEntityPos(Scene_t*, Entity_t*);
+extern void entityShoot();
 extern int8_t isOutOfScene(Scene_t*, Entity_t*);
 extern uint8_t isVisible(Entity_t*);
 extern void destroyEntity(Entity_t*);
