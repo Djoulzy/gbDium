@@ -30,6 +30,7 @@ typedef struct {
     uint8_t nb_shoots;
     uint8_t availableShoot;
     uint8_t shootDelay;
+    uint8_t shootDelayCpt;
     Bullet_t** bullets;
 } Entity_t;
 
@@ -49,13 +50,14 @@ typedef struct {
 
 extern Bullet_t* allocBullet(uint8_t);
 extern void setupEntity(Entity_t*, const metasprite_t**, int16_t, int16_t);
-extern void assignBulletsToEntity(Entity_t*, Bullet_t**, uint8_t);
+extern void assignBulletsToEntity(Entity_t*, Bullet_t**, uint8_t, uint8_t);
 extern void setupScene(Scene_t*, const uint8_t*, uint8_t, uint8_t);
 extern void setCamera(Scene_t*);
 extern void updateView(Scene_t*);
 extern void setCameraStick(Entity_t*);
 extern void updateEntityPos(Scene_t*, Entity_t*);
-extern void entityShoot();
+extern void moveEntityBullets(Entity_t*);
+extern void entityShoot(Entity_t*, int8_t, int8_t, uint8_t);
 extern int8_t isOutOfScene(Scene_t*, Entity_t*);
 extern uint8_t isVisible(Entity_t*);
 extern void destroyEntity(Entity_t*);

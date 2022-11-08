@@ -47,6 +47,7 @@ void init_gfx() {
 
 void main(void)
 {
+    uint8_t props;
     uint16_t retourn_anim;
     int8_t direction, inclinaison;
     uint8_t i, next_shoot = 0, shoot_delay = 0;
@@ -63,7 +64,7 @@ void main(void)
         ship_shoot[i] = allocBullet(44);
         // setupShoot(ship_shoot[i], 44);
     }
-    assignBulletsToEntity(&player, ship_shoot, MAX_SHOOT_NUM);
+    assignBulletsToEntity(&player, ship_shoot, MAX_SHOOT_NUM, SHOOT_DELAY);
 
     EMU_printf("shoots: %u", ship_shoot[0]->spriteNum);
     EMU_printf("shoots: %u", player.bullets[0]->spriteNum);
@@ -123,7 +124,9 @@ void main(void)
 
         if (joypads.joy0 & J_A) {
             if (!retournement) {
-                entityShoot(&player);
+                if (direction < 0) props = S_FLIPX;
+                else props = 0;
+                entityShoot(&player, direction * SHOOT_SPEED, 0, props);
             }
             // if ((next_shoot < MAX_SHOOT_NUM) && (!shoot_delay) && (!retournement)) {
             //     EMU_printf("SHOOT !");

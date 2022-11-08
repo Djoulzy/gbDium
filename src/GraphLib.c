@@ -30,9 +30,39 @@ void setupEntity(Entity_t* entity, const metasprite_t** frames, int16_t sceneX, 
     entity->bullets = NULL;
 }
 
-void assignBulletsToEntity(Entity_t* entity, Bullet_t** bullets, uint8_t size) {
+void assignBulletsToEntity(Entity_t* entity, Bullet_t** bullets, uint8_t size, uint8_t delay) {
     entity->bullets = bullets;
     entity->nb_shoots = size;
+    entity->availableShoot = 0;
+    entity->shootDelay = delay;
+    entity->shootDelayCpt = 0;
+}
+
+void entityShoot(Entity_t* entity, int8_t spdx, int8_t spdy, uint8_t props) {
+    if ((entity->availableShoot < entity->nb_shoots) && (!entity->shootDelayCpt)) {
+        entity->bullets[entity->availableShoot]->speedX = spdx;
+        entity->bullets[entity->availableShoot]->speedY = spdy;
+
+        entity->bullets[entity->availableShoot]->active = TRUE;
+        entity->bullets[entity->availableShoot]->sceneX = entity->sceneX;
+        entity->bullets[entity->availableShoot]->sceneY = entity->sceneY;
+        if (props) set_sprite_prop(entity->bullets[entity->availableShoot]->spriteNum, props);
+        entity->shootDelayCpt = entity->shootDelay;
+        entity->availableShoot = entity->nb_shoots;
+    }
+}
+
+void moveEntityBullets(Entity_t* entity) {
+    for (uint8_t i = 0; i < entity->nb_shoots; i++) {
+        if (entity->bullets[i]->active) {
+            entity->bullets[i]->sceneX += entity->bullets[i].spdx;
+            move_sprite(entity->bullets[i]->spriteNum, entity->bullets[i].x, entity->bullets[i].y);
+            if ((entity->bullets[i].x < -9) || (entity->bullets[i].x > 168)) {
+                entity->bullets[i]->active = FALSE;
+                next_shoot = i;
+            }
+        } else next_shoot = i;
+    }
 }
 
 void setupScene(Scene_t* tmp, const uint8_t* sceneData, uint8_t sceneW, uint8_t sceneH) {
