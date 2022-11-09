@@ -11,8 +11,10 @@
 #define SHOOT_SPEED         4
 #define SHIP_RETURN_FRAME   5
 
+Entity_t player;
 joypads_t joypads;
 Bullet_t* ship_shoot[MAX_SHOOT_NUM];
+extern Scene_t scene;
 
 uint8_t props;
 uint16_t retourn_anim;
@@ -21,11 +23,9 @@ uint8_t retournement = FALSE;
 int8_t out = 0;
 
 void initPlayer() {
-    scene = scene_pt;
-
     set_sprite_data(0, 45, Ship);
 
-    setupEntity(&player, ship_meta, scene->startScrollZoneX, scene->startScrollZoneY);
+    setupEntity(&player, ship_meta, scene.startScrollZoneX, scene.startScrollZoneY);
     setCameraStick(&player);
 
     joypad_init(1, &joypads);
@@ -38,7 +38,6 @@ void initPlayer() {
         // setupShoot(ship_shoot[i], 44);
     }
     assignBulletsToEntity(&player, ship_shoot, MAX_SHOOT_NUM, SHOOT_DELAY);
-    return &player;
 }
 
 void playerMove() {
@@ -93,8 +92,8 @@ void playerMove() {
         }
     }
 
-    updateEntityPos(scene, &player);
-    out = isOutOfViewPort(scene, &player.coord);
+    updateEntityPos(&scene, &player);
+    out = isOutOfViewPort(&scene, &player.coord);
     if (out) {
         if (out & (OUT_LEFT|OUT_RIGHT)) {
             retournement = TRUE;
