@@ -13,7 +13,8 @@ Bullet_t* allocBullet(uint8_t tileNum) {
     spritesCount++;
     bullet->active = FALSE;
     bullet->speedX = bullet->speedY = 0;
-    bullet->sceneX = bullet->sceneY = 0;
+    bullet->coord.sceneX = bullet->coord.sceneY = 0;
+    bullet->coord.visibleX = bullet->coord.visibleY = 0;
     set_sprite_tile(bullet->spriteNum, tileNum);
     return bullet;
 }
@@ -22,8 +23,8 @@ void setupEntity(Entity_t* entity, const metasprite_t** frames, int16_t sceneX, 
     entity->spriteNum = spritesCount;
     spritesCount += 4;
     entity->active = FALSE;
-    entity->sceneX = sceneX;
-    entity->sceneY = sceneY;
+    entity->coord.sceneX = sceneX;
+    entity->coord.sceneY = sceneY;
     entity->speedX = entity->speedY = 0;
     entity->animStep = 0;
     entity->frames = frames;
@@ -44,25 +45,42 @@ void entityShoot(Entity_t* entity, int8_t spdx, int8_t spdy, uint8_t props) {
         entity->bullets[entity->availableShoot]->speedY = spdy;
 
         entity->bullets[entity->availableShoot]->active = TRUE;
-        entity->bullets[entity->availableShoot]->sceneX = entity->sceneX;
-        entity->bullets[entity->availableShoot]->sceneY = entity->sceneY;
+        if (entity->coord.cameraStick) {
+            entity->bullets[entity->availableShoot]->coord.visibleX = entity->coord.visibleX;
+            entity->bullets[entity->availableShoot]->coord.visibleY = entity->coord.visibleY;
+        } else {
+            entity->bullets[entity->availableShoot]->coord.sceneX = entity->coord.sceneX;
+            entity->bullets[entity->availableShoot]->coord.sceneY = entity->coord.sceneY;
+        }
         if (props) set_sprite_prop(entity->bullets[entity->availableShoot]->spriteNum, props);
         entity->shootDelayCpt = entity->shootDelay;
         entity->availableShoot = entity->nb_shoots;
     }
 }
 
-void moveEntityBullets(Entity_t* entity) {
+void moveEntityBullets(Scene_t* scene, Entity_t* entity) {
+    uint16_t tmpX, tmpY;
+
     for (uint8_t i = 0; i < entity->nb_shoots; i++) {
         if (entity->bullets[i]->active) {
-            entity->bullets[i]->sceneX += entity->bullets[i].spdx;
-            move_sprite(entity->bullets[i]->spriteNum, entity->bullets[i].x, entity->bullets[i].y);
-            if ((entity->bullets[i].x < -9) || (entity->bullets[i].x > 168)) {
-                entity->bullets[i]->active = FALSE;
-                next_shoot = i;
+            if (entity->coord.cameraStick) {
+                tmpX = entity->bullets[i]->coord.visibleX += entity->bullets[i]->speedX;
+                tmpY = entity->bullets[i]->coord.visibleY += entity->bullets[i]->speedY;
+            } else {
+                entity->bullets[i]->coord.sceneX += entity->bullets[i]->speedX;
+                entity->bullets[i]->coord.sceneY += entity->bullets[i]->speedY;
+                tmpX = (entity->bullets[i]->coord.sceneX - scene->camera_x) >> SCREEN_SCALE;
+                tmpY = (entity->bullets[i]->coord.sceneY - scene->camera_y) >> SCREEN_SCALE;
             }
-        } else next_shoot = i;
+
+            move_sprite(entity->bullets[i]->spriteNum, tmpX, tmpY);
+            if ((entity->bullets[i]->coord.visibleX < -9) || (entity->bullets[i]->coord.visibleX > 168)) {
+                entity->bullets[i]->active = FALSE;
+                entity->availableShoot = i;
+            }
+        } else entity->availableShoot = i;
     }
+    if (entity->shootDelayCpt) entity->shootDelayCpt--;
 }
 
 void setupScene(Scene_t* tmp, const uint8_t* sceneData, uint8_t sceneW, uint8_t sceneH) {
@@ -89,39 +107,35 @@ void setupScene(Scene_t* tmp, const uint8_t* sceneData, uint8_t sceneW, uint8_t 
 }
 
 void setCameraStick(Entity_t* entity) {
-    entity->cameraStick = TRUE;
+    entity->coord.cameraStick = TRUE;
 }
 
-int8_t isOutOfScene(Scene_t* scene, Entity_t* entity) {
+int8_t isOutOfViewPort(Scene_t* scene, Coord_t* coord) {
     int8_t out = 0;
     
-    if (entity->visibleX > VIEWPORT_WIDTH - VIEWPORT_BORDER_SIZE)  {
-        entity->speedX = 0;
-        entity->visibleX = VIEWPORT_WIDTH - VIEWPORT_BORDER_SIZE;
-        entity->sceneX = (int16_t)(scene->screenWidth) - (int16_t)(SCREEN_BORDER_SIZE);
-        scene->camera_x = scene->camera_max_x;
+    if (coord->visibleX > VIEWPORT_WIDTH - VIEWPORT_BORDER_SIZE)  {
+        coord->visibleX = VIEWPORT_WIDTH - VIEWPORT_BORDER_SIZE;
+        coord->sceneX = (int16_t)(scene->screenWidth) - (int16_t)(SCREEN_BORDER_SIZE);
+        if (coord->cameraStick) scene->camera_x = scene->camera_max_x;
         out |= OUT_RIGHT;
     }
-    else if (entity->visibleX < VIEWPORT_BORDER_SIZE)  {
-        entity->speedX = 0;
-        entity->visibleX = VIEWPORT_BORDER_SIZE;
-        entity->sceneX = SCREEN_BORDER_SIZE;
-        scene->camera_x = 0;
+    else if (coord->visibleX < VIEWPORT_BORDER_SIZE)  {
+        coord->visibleX = VIEWPORT_BORDER_SIZE;
+        coord->sceneX = SCREEN_BORDER_SIZE;
+        if (coord->cameraStick) scene->camera_x = 0;
         out |= OUT_LEFT;
     }
 
-    if (entity->visibleY > VIEWPORT_HEIGHT - VIEWPORT_BORDER_SIZE) {
-        entity->speedY = 0;
-        entity->visibleY = VIEWPORT_HEIGHT - VIEWPORT_BORDER_SIZE;
-        entity->sceneY = (int16_t)(scene->screenHeight) - (int16_t)(SCREEN_BORDER_SIZE);
-        scene->camera_y = scene->camera_max_y;
+    if (coord->visibleY > VIEWPORT_HEIGHT - VIEWPORT_BORDER_SIZE) {
+        coord->visibleY = VIEWPORT_HEIGHT - VIEWPORT_BORDER_SIZE;
+        coord->sceneY = (int16_t)(scene->screenHeight) - (int16_t)(SCREEN_BORDER_SIZE);
+        if (coord->cameraStick) scene->camera_y = scene->camera_max_y;
         out |= OUT_DOWN;
     }
-    else if (entity->visibleY < VIEWPORT_BORDER_SIZE) {
-        entity->speedY = 0;
-        entity->visibleY = VIEWPORT_BORDER_SIZE ;
-        entity->sceneY = SCREEN_BORDER_SIZE;
-        scene->camera_y = 0;
+    else if (coord->visibleY < VIEWPORT_BORDER_SIZE) {
+        coord->visibleY = VIEWPORT_BORDER_SIZE ;
+        coord->sceneY = SCREEN_BORDER_SIZE;
+        if (coord->cameraStick) scene->camera_y = 0;
         out |= OUT_UP;
     }
 
@@ -129,18 +143,18 @@ int8_t isOutOfScene(Scene_t* scene, Entity_t* entity) {
 }
 
 void updateEntityPos(Scene_t* scene, Entity_t* entity) {
-    entity->sceneX += entity->speedX;
-    entity->sceneY += entity->speedY;
+    entity->coord.sceneX += entity->speedX;
+    entity->coord.sceneY += entity->speedY;
 
-    if (entity->cameraStick) {
-        if ((entity->sceneX >= scene->startScrollZoneX) && (entity->sceneX <= scene->endScrollZoneX)) {
+    if (entity->coord.cameraStick) {
+        if ((entity->coord.sceneX >= scene->startScrollZoneX) && (entity->coord.sceneX <= scene->endScrollZoneX)) {
             scene->camera_x += entity->speedX;
             if (scene->camera_x > scene->camera_max_x) scene->camera_x = scene->camera_max_x;
             if (scene->camera_x < 0) scene->camera_x = 0;
             scene->redraw = TRUE;
         }
         
-        if ((entity->sceneY >= scene->startScrollZoneY) && (entity->sceneY <= scene->endScrollZoneY)) {
+        if ((entity->coord.sceneY >= scene->startScrollZoneY) && (entity->coord.sceneY <= scene->endScrollZoneY)) {
             scene->camera_y += entity->speedY;
             // EMU_printf("CamX: %d (%d) - CamY: %d (%d) - AbsX: %d - AbsY: %d - ShpX: %d - ShpY: %d", camera_x, camera_max_x, camera_y, camera_max_y, ShipAbsX, ShipAbsY, tmpX, tmpY);
             if (scene->camera_y > scene->camera_max_y) scene->camera_y = scene->camera_max_y;
@@ -149,13 +163,13 @@ void updateEntityPos(Scene_t* scene, Entity_t* entity) {
         }
     }
 
-    entity->visibleX = ((entity->sceneX - scene->camera_x) >> SCREEN_SCALE);
-    entity->visibleY = ((entity->sceneY - scene->camera_y) >> SCREEN_SCALE);
+    entity->coord.visibleX = ((entity->coord.sceneX - scene->camera_x) >> SCREEN_SCALE);
+    entity->coord.visibleY = ((entity->coord.sceneY - scene->camera_y) >> SCREEN_SCALE);
 }
 
 uint8_t isVisible(Entity_t* entity) {
-    if ((entity->visibleX>=0) && (entity->visibleX<=176)
-        && (entity->visibleY>=0) && (entity->visibleY<=160))
+    if ((entity->coord.visibleX>=0) && (entity->coord.visibleX<=176)
+        && (entity->coord.visibleY>=0) && (entity->coord.visibleY<=160))
     {
         return TRUE;
     } else {
@@ -207,5 +221,6 @@ void updateView(Scene_t* scene) {
 }
 
 void destroyEntity(Entity_t* entity) {
-    // ToDO: free shoots
+    for (uint8_t i = 0; i < entity->nb_shoots; i++)
+        free(entity->bullets[i]);
 }

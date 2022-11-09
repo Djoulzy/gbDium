@@ -11,20 +11,24 @@
 #define OUT_DOWN    16
 
 typedef struct {
+    uint8_t cameraStick;
+    int16_t sceneX, sceneY;
+    int16_t visibleX, visibleY;
+} Coord_t;
+
+typedef struct {
     uint8_t active;
     uint8_t spriteNum;
     int8_t speedX, speedY;
-    int16_t sceneX, sceneY;
+    Coord_t coord;
     uint8_t props;
 } Bullet_t;
 
 typedef struct {
     uint8_t active;
     uint8_t spriteNum;
-    uint8_t cameraStick;
     int8_t speedX, speedY;
-    int16_t sceneX, sceneY;
-    int16_t visibleX, visibleY;
+    Coord_t coord;
     uint8_t animStep;
     const metasprite_t** frames;
     uint8_t nb_shoots;
@@ -56,11 +60,10 @@ extern void setCamera(Scene_t*);
 extern void updateView(Scene_t*);
 extern void setCameraStick(Entity_t*);
 extern void updateEntityPos(Scene_t*, Entity_t*);
-extern void moveEntityBullets(Entity_t*);
+extern void moveEntityBullets(Scene_t*, Entity_t*);
 extern void entityShoot(Entity_t*, int8_t, int8_t, uint8_t);
-extern int8_t isOutOfScene(Scene_t*, Entity_t*);
+extern int8_t isOutOfViewPort(Scene_t*, Coord_t*);
 extern uint8_t isVisible(Entity_t*);
 extern void destroyEntity(Entity_t*);
-
 
 #endif

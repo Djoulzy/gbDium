@@ -38,7 +38,7 @@ void init_gfx() {
     setupEntity(&player, ship_meta, scene.startScrollZoneX, scene.startScrollZoneY);
     setCameraStick(&player);
 
-    // initAliens();
+    initAliens();
 	// Turn the background map on to make it visible
     SHOW_BKG;
     SHOW_SPRITES;
@@ -52,6 +52,7 @@ void main(void)
     int8_t direction, inclinaison;
     uint8_t i, next_shoot = 0, shoot_delay = 0;
     uint8_t retournement = FALSE;
+    int8_t out = 0;
 
 	init_gfx();
 
@@ -117,10 +118,14 @@ void main(void)
         }
 
         updateEntityPos(&scene, &player);
-        if (isOutOfScene(&scene, &player) & (OUT_LEFT|OUT_RIGHT)) {
-            retournement = TRUE;
-            retourn_anim = 0;
-        };
+        out = isOutOfViewPort(&scene, &player.coord);
+        if (out) {
+            if (out & (OUT_LEFT|OUT_RIGHT)) {
+                retournement = TRUE;
+                retourn_anim = 0;
+                player.speedX = 0;
+            } else player.speedY = 0;
+        }
 
         if (joypads.joy0 & J_A) {
             if (!retournement) {
@@ -128,23 +133,13 @@ void main(void)
                 else props = 0;
                 entityShoot(&player, direction * SHOOT_SPEED, 0, props);
             }
-            // if ((next_shoot < MAX_SHOOT_NUM) && (!shoot_delay) && (!retournement)) {
-            //     EMU_printf("SHOOT !");
-            //     ship_shoot[next_shoot].spdx = direction * SHOOT_SPEED;
-            //     ship_shoot[next_shoot].active = 1;
-            //     ship_shoot[next_shoot].x = tmpX;
-            //     ship_shoot[next_shoot].y = tmpY + 4;
-            //     if (direction < 0) set_sprite_prop(SHOOT_SPRITE+next_shoot, S_FLIPX);
-            //     shoot_delay = SHOOT_DELAY;
-            //     next_shoot = MAX_SHOOT_NUM;
-            // }
         }
 
         if (retournement) {
             if (direction >= 0)
-                move_metasprite(ship_meta[SHIP_RETURN_FRAME + (retourn_anim >> 2)], 0, player.spriteNum, player.visibleX, player.visibleY);
+                move_metasprite(ship_meta[SHIP_RETURN_FRAME + (retourn_anim >> 2)], 0, player.spriteNum, player.coord.visibleX, player.coord.visibleY);
             else
-                move_metasprite_vflip(ship_meta[SHIP_RETURN_FRAME + (retourn_anim >> 2)], 0, player.spriteNum, player.visibleX, player.visibleY);
+                move_metasprite_vflip(ship_meta[SHIP_RETURN_FRAME + (retourn_anim >> 2)], 0, player.spriteNum, player.coord.visibleX, player.coord.visibleY);
             retourn_anim++;
             if (retourn_anim > 20) {
                 retournement = FALSE;
@@ -155,34 +150,21 @@ void main(void)
         } else {
             if (direction >= 0) {
                 if (inclinaison >= 0)
-                    move_metasprite(ship_meta[abs(inclinaison >> 2)], 0, player.spriteNum, player.visibleX, player.visibleY);
+                    move_metasprite(ship_meta[abs(inclinaison >> 2)], 0, player.spriteNum, player.coord.visibleX, player.coord.visibleY);
                 else {
-                    move_metasprite_hflip(ship_meta[abs(inclinaison >> 2)], 0, player.spriteNum, player.visibleX, player.visibleY+16);
+                    move_metasprite_hflip(ship_meta[abs(inclinaison >> 2)], 0, player.spriteNum, player.coord.visibleX, player.coord.visibleY+16);
                 }
             }
             else {
                 if (inclinaison >= 0)
-                    move_metasprite_vflip(ship_meta[abs(inclinaison >> 2)], 0, player.spriteNum, player.visibleX, player.visibleY);
-                else move_metasprite_hvflip(ship_meta[abs(inclinaison >> 2)], 0, player.spriteNum, player.visibleX, player.visibleY+16);
+                    move_metasprite_vflip(ship_meta[abs(inclinaison >> 2)], 0, player.spriteNum, player.coord.visibleX, player.coord.visibleY);
+                else move_metasprite_hvflip(ship_meta[abs(inclinaison >> 2)], 0, player.spriteNum, player.coord.visibleX, player.coord.visibleY+16);
             }
         }
 
-        // next_shoot = 100;
-        // for (i = 0; i<MAX_SHOOT_NUM; i++) {
-        //     if (ship_shoot[i].active) {
-        //         ship_shoot[i].x += ship_shoot[i].spdx;
-        //         move_sprite(SHOOT_SPRITE+i, ship_shoot[i].x, ship_shoot[i].y);
-        //         if ((ship_shoot[i].x < -9) || (ship_shoot[i].x > 168)) {
-        //             ship_shoot[i].active = 0;
-        //             next_shoot = i;
-        //         }
-        //     } else next_shoot = i;
-        // }
+        moveEntityBullets(&scene, &player);
 
-		// Done processing, yield CPU and wait for start of next frame
-        if (shoot_delay) shoot_delay--;
-
-        // alienMoves(scene.camera_x, scene.camera_y, ShipAbsX, ShipAbsY);
+        alienMoves(&scene, &player.coord);
 
         updateView(&scene);
     }
