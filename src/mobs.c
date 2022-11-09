@@ -14,7 +14,7 @@
 #define SHOOT_SPEED     6
 
 Entity_t alienTroop[NB_ALIENS];
-uint8_t next_shoot = 0;
+Bullet_t* aliens_bullet[NB_ALIENS][1];
 
 const metasprite_t alien1[] = {
     METASPR_ITEM(0, -8, 45, 0), METASPR_ITEM(8, 0, 46, 0), METASPR_ITEM(-8, 8, 47, 0), METASPR_ITEM(8, 0, 48, 0),
@@ -32,15 +32,16 @@ const metasprite_t* const alienFrames[2] = {
 
 void initAliens(void) {
     uint8_t i;
-    Bullet_t* alien_shoot;
 
     set_sprite_data(45, 9, alien_tiles);
 
     initrand(DIV_REG);
     for (i = 0; i<NB_ALIENS; i++) {
         setupEntity(&alienTroop[i], alienFrames, (rand() << 1) << SCREEN_MULTI, (rand() << 1) << SCREEN_MULTI);
-        alien_shoot = allocBullet(53);
-        assignBulletsToEntity(&alienTroop[i], &alien_shoot, 1, 1);
+        aliens_bullet[i][0] = allocBullet(53);
+        assignBulletsToEntity(&alienTroop[i], aliens_bullet[i], 1, 1);
+
+        // dumpEntity(&alienTroop[i]);
     }
 }
 
@@ -55,6 +56,7 @@ void alienMoves(Scene_t* scene, Coord_t* playerCoord) {
         updateEntityPos(scene, &alienTroop[i]);
         
         if (isVisible(&alienTroop[i])) {
+            spdx = spdy = 0;
             if (!alienTroop[i].bullets[0]->active) {
                 if (playerCoord->sceneX > alienTroop[i].coord.sceneX) spdx = SHOOT_SPEED;
                 else if (playerCoord->sceneX < alienTroop[i].coord.sceneX) spdx = -SHOOT_SPEED;
@@ -68,7 +70,7 @@ void alienMoves(Scene_t* scene, Coord_t* playerCoord) {
             alienTroop[i].animStep += 16;
         }
 
-        // moveEntityBullets(scene, &alienTroop[i]);
+        moveEntityBullets(scene, &alienTroop[i]);
 
         // if (alienTroop[i]->shoot->active) {
         //     alienTroop[i]->shoot->x += alienTroop[i]->shoot->spdx;

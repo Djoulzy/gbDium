@@ -38,7 +38,6 @@ void init_gfx() {
     setupEntity(&player, ship_meta, scene.startScrollZoneX, scene.startScrollZoneY);
     setCameraStick(&player);
 
-    initAliens();
 	// Turn the background map on to make it visible
     SHOW_BKG;
     SHOW_SPRITES;
@@ -67,9 +66,12 @@ void main(void)
     }
     assignBulletsToEntity(&player, ship_shoot, MAX_SHOOT_NUM, SHOOT_DELAY);
 
-    EMU_printf("shoots: %u", ship_shoot[0]->spriteNum);
-    EMU_printf("shoots: %u", player.bullets[0]->spriteNum);
-    
+    // EMU_printf("shoots: %u", ship_shoot[0]->spriteNum);
+    // EMU_printf("shoots: %u", player.bullets[0]->spriteNum);
+    // dumpEntity(&player);
+
+    initAliens();
+
     SCX_REG = 0; SCY_REG = 0;
     // Loop forever
     while(1) {

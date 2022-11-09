@@ -15,6 +15,7 @@ Bullet_t* allocBullet(uint8_t tileNum) {
     bullet->speedX = bullet->speedY = 0;
     bullet->coord.sceneX = bullet->coord.sceneY = 0;
     bullet->coord.visibleX = bullet->coord.visibleY = 0;
+    bullet->coord.cameraStick = FALSE;
     set_sprite_tile(bullet->spriteNum, tileNum);
     return bullet;
 }
@@ -59,22 +60,21 @@ void entityShoot(Entity_t* entity, int8_t spdx, int8_t spdy, uint8_t props) {
 }
 
 void moveEntityBullets(Scene_t* scene, Entity_t* entity) {
-    uint16_t tmpX, tmpY;
-
     for (uint8_t i = 0; i < entity->nb_shoots; i++) {
         if (entity->bullets[i]->active) {
+            // dumpEntity(entity);
             if (entity->coord.cameraStick) {
-                tmpX = entity->bullets[i]->coord.visibleX += entity->bullets[i]->speedX;
-                tmpY = entity->bullets[i]->coord.visibleY += entity->bullets[i]->speedY;
+                entity->bullets[i]->coord.visibleX += entity->bullets[i]->speedX;
+                entity->bullets[i]->coord.visibleY += entity->bullets[i]->speedY;
             } else {
                 entity->bullets[i]->coord.sceneX += entity->bullets[i]->speedX;
                 entity->bullets[i]->coord.sceneY += entity->bullets[i]->speedY;
-                tmpX = (entity->bullets[i]->coord.sceneX - scene->camera_x) >> SCREEN_SCALE;
-                tmpY = (entity->bullets[i]->coord.sceneY - scene->camera_y) >> SCREEN_SCALE;
+                entity->bullets[i]->coord.visibleX = (entity->bullets[i]->coord.sceneX - scene->camera_x) >> SCREEN_SCALE;
+                entity->bullets[i]->coord.visibleY = (entity->bullets[i]->coord.sceneY - scene->camera_y) >> SCREEN_SCALE;
             }
 
-            move_sprite(entity->bullets[i]->spriteNum, tmpX, tmpY);
-            if ((entity->bullets[i]->coord.visibleX < -9) || (entity->bullets[i]->coord.visibleX > 168)) {
+            move_sprite(entity->bullets[i]->spriteNum, entity->bullets[i]->coord.visibleX, entity->bullets[i]->coord.visibleY);
+            if (isOutOfViewPort(scene, &(entity->bullets[i]->coord))) {
                 entity->bullets[i]->active = FALSE;
                 entity->availableShoot = i;
             }
@@ -223,4 +223,20 @@ void updateView(Scene_t* scene) {
 void destroyEntity(Entity_t* entity) {
     for (uint8_t i = 0; i < entity->nb_shoots; i++)
         free(entity->bullets[i]);
+}
+
+void dumpEntity(Entity_t* entity) {
+    Bullet_t *b;
+
+    EMU_printf("=== Enity: %d ===", entity->spriteNum);
+    EMU_printf("Active: %d", entity->active);
+    EMU_printf("Scene Coord: %d x %d", entity->coord.sceneX, entity->coord.sceneY);
+    EMU_printf("ViewPort Coord: %d x %d", entity->coord.visibleX, entity->coord.visibleY);
+    EMU_printf("Camera follow: %d", entity->coord.cameraStick);
+    EMU_printf("Max Bullets: %d", entity->nb_shoots);
+    for(uint8_t i = 0; i<entity->nb_shoots; i++) {
+        b = entity->bullets[i];
+        EMU_printf("  %d) Bullets %d: Active: %d Coord: (%d x %d)(%d x %d)", i, b->spriteNum, b->active, b->coord.sceneX, b->coord.sceneY, b->coord.visibleX, b->coord.visibleY);
+    }
+    EMU_printf("-");
 }

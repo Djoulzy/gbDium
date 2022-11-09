@@ -65,5 +65,6 @@ extern void entityShoot(Entity_t*, int8_t, int8_t, uint8_t);
 extern int8_t isOutOfViewPort(Scene_t*, Coord_t*);
 extern uint8_t isVisible(Entity_t*);
 extern void destroyEntity(Entity_t*);
+extern void dumpEntity(Entity_t*);
 
 #endif
