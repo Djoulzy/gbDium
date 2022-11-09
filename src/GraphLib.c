@@ -77,6 +77,7 @@ void moveEntityBullets(Scene_t* scene, Entity_t* entity) {
             if (isOutOfViewPort(scene, &(entity->bullets[i]->coord))) {
                 entity->bullets[i]->active = FALSE;
                 entity->availableShoot = i;
+                hide_sprite(entity->bullets[i]->spriteNum);
             }
         } else entity->availableShoot = i;
     }

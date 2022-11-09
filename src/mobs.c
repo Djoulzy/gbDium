@@ -56,6 +56,7 @@ void alienMoves(Scene_t* scene, Coord_t* playerCoord) {
         updateEntityPos(scene, &alienTroop[i]);
         
         if (isVisible(&alienTroop[i])) {
+            // EMU_printf("Alien %d visible !", alienTroop[i].spriteNum);
             spdx = spdy = 0;
             if (!alienTroop[i].bullets[0]->active) {
                 if (playerCoord->sceneX > alienTroop[i].coord.sceneX) spdx = SHOOT_SPEED;
@@ -71,16 +72,5 @@ void alienMoves(Scene_t* scene, Coord_t* playerCoord) {
         }
 
         moveEntityBullets(scene, &alienTroop[i]);
-
-        // if (alienTroop[i]->shoot->active) {
-        //     alienTroop[i]->shoot->x += alienTroop[i]->shoot->spdx;
-        //     alienTroop[i]->shoot->y += alienTroop[i]->shoot->spdy;
-        //     tmpX = (alienTroop[i]->shoot->x - xref) >> SCREEN_MULTI;
-        //     tmpY = (alienTroop[i]->shoot->y - yref) >> SCREEN_MULTI;
-        //     // EMU_printf("ShootX: %d, ShootY: %d", tmpX, tmpY);
-        //     if ((tmpX>=0) && (tmpX<=176) && (tmpY>=0) && (tmpY<=160)) {
-        //         move_sprite(alienTroop[i]->shoot->spriteNum, tmpX, tmpY);
-        //     } else alienTroop[i]->shoot->active = FALSE;
-        // }
     }
 }
