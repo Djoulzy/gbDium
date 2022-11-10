@@ -2,6 +2,11 @@
 #define GraphLib_H
 
 #include <gbdk/metasprites.h>
+#include "settings.h"
+
+#define SCREEN_BORDER_SIZE      VIEWPORT_BORDER_SIZE << SCREEN_SCALE
+#define VIEWPORT_LIMIT_X        VIEWPORT_WIDTH - VIEWPORT_BORDER_SIZE
+#define VIEWPORT_LIMIT_Y        VIEWPORT_HEIGHT - VIEWPORT_BORDER_SIZE
 
 #define MIN(A,B) ((A)<(B)?(A):(B))
 

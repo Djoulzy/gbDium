@@ -1,7 +1,6 @@
 #include <gb/gb.h>
 #include <stdlib.h>
 #include <gbdk/emu_debug.h>
-#include "settings.h"
 #include "GraphLib.h"
 
 uint8_t spritesCount = 0;
@@ -111,11 +110,22 @@ void setCameraStick(Entity_t* entity) {
     entity->coord.cameraStick = TRUE;
 }
 
+uint8_t isVisible(Entity_t* entity) {
+    if ((entity->coord.visibleX>=0) && (entity->coord.visibleX<=176)
+        && (entity->coord.visibleY>=0) && (entity->coord.visibleY<=160))
+    {
+        return TRUE;
+    } else {
+        hide_metasprite(entity->frames[0], entity->spriteNum);
+        return FALSE;
+    }
+}
+
 int8_t isOutOfViewPort(Scene_t* scene, Coord_t* coord) {
     int8_t out = 0;
     
-    if (coord->visibleX > VIEWPORT_WIDTH - VIEWPORT_BORDER_SIZE)  {
-        coord->visibleX = VIEWPORT_WIDTH - VIEWPORT_BORDER_SIZE;
+    if (coord->visibleX > VIEWPORT_LIMIT_X)  {
+        coord->visibleX = VIEWPORT_LIMIT_X;
         coord->sceneX = (int16_t)(scene->screenWidth) - (int16_t)(SCREEN_BORDER_SIZE);
         if (coord->cameraStick) scene->camera_x = scene->camera_max_x;
         out |= OUT_RIGHT;
@@ -127,8 +137,8 @@ int8_t isOutOfViewPort(Scene_t* scene, Coord_t* coord) {
         out |= OUT_LEFT;
     }
 
-    if (coord->visibleY > VIEWPORT_HEIGHT - VIEWPORT_BORDER_SIZE) {
-        coord->visibleY = VIEWPORT_HEIGHT - VIEWPORT_BORDER_SIZE;
+    if (coord->visibleY > VIEWPORT_LIMIT_Y) {
+        coord->visibleY = VIEWPORT_LIMIT_Y;
         coord->sceneY = (int16_t)(scene->screenHeight) - (int16_t)(SCREEN_BORDER_SIZE);
         if (coord->cameraStick) scene->camera_y = scene->camera_max_y;
         out |= OUT_DOWN;
@@ -168,17 +178,6 @@ void updateEntityPos(Scene_t* scene, Entity_t* entity) {
     entity->coord.visibleY = ((entity->coord.sceneY - scene->camera_y) >> SCREEN_SCALE);
 }
 
-uint8_t isVisible(Entity_t* entity) {
-    if ((entity->coord.visibleX>=0) && (entity->coord.visibleX<=176)
-        && (entity->coord.visibleY>=0) && (entity->coord.visibleY<=160))
-    {
-        return TRUE;
-    } else {
-        hide_metasprite(entity->frames[0], entity->spriteNum);
-        return FALSE;
-    }
-}
-
 void setCamera(Scene_t* scene) {
     uint16_t tmpX, tmpY;
 
@@ -191,10 +190,10 @@ void setCamera(Scene_t* scene) {
     scene->map_pos_y = (uint8_t)(tmpY >> 3u);
     if (scene->map_pos_y != scene->old_map_pos_y) { 
         if (tmpY < scene->old_camera_y) {
-            set_bkg_submap(scene->map_pos_x, scene->map_pos_y, MIN(21u, scene->sceneW - scene->map_pos_x), 1, scene->sceneData, scene->sceneW);
+            set_bkg_submap(scene->map_pos_x, scene->map_pos_y, MIN(21u, scene->sceneW - scene->map_pos_x), SCROLL_STEPS, scene->sceneData, scene->sceneW);
         } else {
             if ((scene->sceneH - 18u) > scene->map_pos_y)
-                set_bkg_submap(scene->map_pos_x, scene->map_pos_y + 18u, MIN(21u, scene->sceneW - scene->map_pos_x), 1, scene->sceneData, scene->sceneW);     
+                set_bkg_submap(scene->map_pos_x, scene->map_pos_y + 18u, MIN(21u, scene->sceneW - scene->map_pos_x), SCROLL_STEPS, scene->sceneData, scene->sceneW);     
         }
         scene->old_map_pos_y = scene->map_pos_y; 
     }
@@ -202,10 +201,10 @@ void setCamera(Scene_t* scene) {
     scene->map_pos_x = (uint8_t)(tmpX >> 3u);
     if (scene->map_pos_x != scene->old_map_pos_x) {
         if (tmpX < scene->old_camera_x) {
-            set_bkg_submap(scene->map_pos_x, scene->map_pos_y, 1, MIN(19u, scene->sceneH - scene->map_pos_y), scene->sceneData, scene->sceneW);     
+            set_bkg_submap(scene->map_pos_x, scene->map_pos_y, SCROLL_STEPS, MIN(19u, scene->sceneH - scene->map_pos_y), scene->sceneData, scene->sceneW);     
         } else {
             if ((scene->sceneW - 20u) > scene->map_pos_x)
-                set_bkg_submap(scene->map_pos_x + 20u, scene->map_pos_y, 1, MIN(19u, scene->sceneH - scene->map_pos_y), scene->sceneData, scene->sceneW);     
+                set_bkg_submap(scene->map_pos_x + 20u, scene->map_pos_y, SCROLL_STEPS, MIN(19u, scene->sceneH - scene->map_pos_y), scene->sceneData, scene->sceneW);     
         }
         scene->old_map_pos_x = scene->map_pos_x;
     }
