@@ -128,4 +128,5 @@ void playerMove() {
             else move_metasprite_hvflip(ship_meta[abs(inclinaison >> 2)], 0, player.spriteNum, player.coord.visibleX, player.coord.visibleY+16);
         }
     }
+
 }

@@ -191,7 +191,7 @@ void setCamera(Scene_t* scene) {
     scene->map_pos_y = (uint8_t)(tmpY >> 3u);
     // left or right
 
-    if (abs(scene->map_pos_x - scene->old_map_pos_x) >= SCROLL_STEPS) {
+    if (scene->map_pos_x != scene->old_map_pos_x) {
         if (tmpX < scene->old_camera_x) {
             set_bkg_submap(scene->map_pos_x, scene->map_pos_y, SCROLL_STEPS, MIN(19u, scene->sceneH - scene->map_pos_y), scene->sceneData, scene->sceneW);     
         } else {
@@ -201,7 +201,7 @@ void setCamera(Scene_t* scene) {
         scene->old_map_pos_x = scene->map_pos_x;
     }
     // up or down
-    if (abs(scene->map_pos_y - scene->old_map_pos_y) >= SCROLL_STEPS) { 
+    if (scene->map_pos_y != scene->old_map_pos_y) { 
         if (tmpY < scene->old_camera_y) {
             set_bkg_submap(scene->map_pos_x, scene->map_pos_y, MIN(21u, scene->sceneW - scene->map_pos_x), SCROLL_STEPS, scene->sceneData, scene->sceneW);
         } else {

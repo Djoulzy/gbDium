@@ -11,7 +11,7 @@
 #define SHOOT_SPRITE    ALIENS_SPRITE+(NB_ALIENS*4)
 #define SCREEN_MULTI    4
 #define MAX_SHOOT_NUM   10
-#define SHOOT_SPEED     6
+#define SHOOT_SPEED     12
 
 Entity_t alienTroop[NB_ALIENS];
 Bullet_t* aliens_bullet[NB_ALIENS][1];
@@ -56,7 +56,6 @@ void alienMoves(Scene_t* scene, Coord_t* playerCoord) {
         updateEntityPos(scene, &alienTroop[i]);
         
         if (isVisible(&alienTroop[i])) {
-            // EMU_printf("Alien %d visible !", alienTroop[i].spriteNum);
             spdx = spdy = 0;
             if (!alienTroop[i].bullets[0]->active) {
                 if (playerCoord->sceneX > alienTroop[i].coord.sceneX) spdx = SHOOT_SPEED;
