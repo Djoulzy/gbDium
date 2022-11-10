@@ -25,7 +25,7 @@ int8_t out = 0;
 void initPlayer() {
     set_sprite_data(0, 45, Ship);
 
-    setupEntity(&player, ship_meta, scene.startScrollZoneX, scene.startScrollZoneY);
+    setupEntity(&player, ship_meta, START_SCROLL_X, START_SCROLL_Y);
     setCameraStick(&player);
 
     joypad_init(1, &joypads);
@@ -92,8 +92,8 @@ void playerMove() {
         }
     }
 
-    updateEntityPos(&scene, &player);
-    out = isOutOfViewPort(&scene, &player.coord);
+    updatePlayerPos(&scene, &player);
+    out = isOutOfScene(&scene, &player.coord);
     if (out) {
         if (out & (OUT_LEFT|OUT_RIGHT)) {
             retournement = TRUE;
@@ -104,9 +104,9 @@ void playerMove() {
 
     if (retournement) {
         if (direction >= 0)
-            move_metasprite(ship_meta[SHIP_RETURN_FRAME + (retourn_anim >> 2)], 0, player.spriteNum, player.coord.visibleX, player.coord.visibleY);
+            move_metasprite(ship_meta[SHIP_RETURN_FRAME + (retourn_anim >> 2)], 0, player.spriteNum, player.coord.viewportX, player.coord.viewportY);
         else
-            move_metasprite_vflip(ship_meta[SHIP_RETURN_FRAME + (retourn_anim >> 2)], 0, player.spriteNum, player.coord.visibleX, player.coord.visibleY);
+            move_metasprite_vflip(ship_meta[SHIP_RETURN_FRAME + (retourn_anim >> 2)], 0, player.spriteNum, player.coord.viewportX, player.coord.viewportY);
         retourn_anim++;
         if (retourn_anim > 20) {
             retournement = FALSE;
@@ -117,15 +117,15 @@ void playerMove() {
     } else {
         if (direction >= 0) {
             if (inclinaison >= 0)
-                move_metasprite(ship_meta[abs(inclinaison >> 2)], 0, player.spriteNum, player.coord.visibleX, player.coord.visibleY);
+                move_metasprite(ship_meta[abs(inclinaison >> 2)], 0, player.spriteNum, player.coord.viewportX, player.coord.viewportY);
             else {
-                move_metasprite_hflip(ship_meta[abs(inclinaison >> 2)], 0, player.spriteNum, player.coord.visibleX, player.coord.visibleY+16);
+                move_metasprite_hflip(ship_meta[abs(inclinaison >> 2)], 0, player.spriteNum, player.coord.viewportX, player.coord.viewportY+16);
             }
         }
         else {
             if (inclinaison >= 0)
-                move_metasprite_vflip(ship_meta[abs(inclinaison >> 2)], 0, player.spriteNum, player.coord.visibleX, player.coord.visibleY);
-            else move_metasprite_hvflip(ship_meta[abs(inclinaison >> 2)], 0, player.spriteNum, player.coord.visibleX, player.coord.visibleY+16);
+                move_metasprite_vflip(ship_meta[abs(inclinaison >> 2)], 0, player.spriteNum, player.coord.viewportX, player.coord.viewportY);
+            else move_metasprite_hvflip(ship_meta[abs(inclinaison >> 2)], 0, player.spriteNum, player.coord.viewportX, player.coord.viewportY+16);
         }
     }
 
