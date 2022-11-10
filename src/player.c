@@ -92,6 +92,8 @@ void playerMove() {
         }
     }
 
+    player.coord.upscaledX += player.speedX;
+    player.coord.upscaledY += player.speedY;
     updatePlayerPos(&scene, &player);
     out = isOutOfScene(&scene, &player.coord);
     if (out) {

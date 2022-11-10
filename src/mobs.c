@@ -48,33 +48,39 @@ void initAliens(void) {
 }
 
 void alienMoves(Scene_t* scene, Coord_t* playerCoord) {
+    uint8_t i;
     int8_t spdx, spdy;
 
     alien_turn--;
+    for (i = 0; i<NB_ALIENS; i++) {
+        if (i == alien_turn) {
+            if (playerCoord->X > alienTroop[i].coord.X) alienTroop[i].speedX = ALIEN_SPEED; else alienTroop[i].speedX = -ALIEN_SPEED;
+            if (playerCoord->Y > alienTroop[i].coord.Y) alienTroop[i].speedY = ALIEN_SPEED; else alienTroop[i].speedY = -ALIEN_SPEED;
 
-    if (playerCoord->X > alienTroop[alien_turn].coord.X) alienTroop[alien_turn].speedX = ALIEN_SPEED; else alienTroop[alien_turn].speedX = -ALIEN_SPEED;
-    if (playerCoord->Y > alienTroop[alien_turn].coord.Y) alienTroop[alien_turn].speedY = ALIEN_SPEED; else alienTroop[alien_turn].speedY = -ALIEN_SPEED;
+            alienTroop[i].coord.X += alienTroop[i].speedX;
+            alienTroop[i].coord.Y += alienTroop[i].speedY;
+            updateMobPos(scene, &alienTroop[i]);
+            
+            if (isVisible(&(alienTroop[i].coord))) {
+                spdx = spdy = 0;
+                if (!alienTroop[i].bullets[0]->active) {
+                    if (playerCoord->X > alienTroop[i].coord.X) spdx = SHOOT_SPEED;
+                    else if (playerCoord->X < alienTroop[i].coord.X) spdx = -SHOOT_SPEED;
+                    if (playerCoord->Y > alienTroop[i].coord.Y) spdy = SHOOT_SPEED;
+                    else if (playerCoord->Y < alienTroop[i].coord.Y) spdy = -SHOOT_SPEED;
+                    entityShoot(&alienTroop[i], spdx, spdy, 0);
+                }
 
-    updateMobPos(scene, &alienTroop[alien_turn]);
-    
-    if (isVisible(&(alienTroop[alien_turn].coord))) {
-        spdx = spdy = 0;
-        if (!alienTroop[alien_turn].bullets[0]->active) {
-            if (playerCoord->X > alienTroop[alien_turn].coord.X) spdx = SHOOT_SPEED;
-            else if (playerCoord->X < alienTroop[alien_turn].coord.X) spdx = -SHOOT_SPEED;
-            if (playerCoord->Y > alienTroop[alien_turn].coord.Y) spdy = SHOOT_SPEED;
-            else if (playerCoord->Y < alienTroop[alien_turn].coord.Y) spdy = -SHOOT_SPEED;
-            entityShoot(&alienTroop[alien_turn], spdx, spdy, 0);
+                alienTroop[i].animStep = abs(alienTroop[i].animStep -1);
+                move_metasprite(alienFrames[alienTroop[i].animStep], 0, alienTroop[i].spriteNum, alienTroop[i].coord.viewportX, alienTroop[i].coord.viewportY);
+            }
+        } else {
+            updateMobPos(scene, &alienTroop[i]);
+            if (isVisible(&(alienTroop[i].coord)))
+                move_metasprite(alienFrames[alienTroop[i].animStep], 0, alienTroop[i].spriteNum, alienTroop[i].coord.viewportX, alienTroop[i].coord.viewportY);
         }
 
-        alienTroop[alien_turn].animStep += 16;
-        alienTroop[alien_turn].animStep = abs(alienTroop[alien_turn].animStep -1);
-        move_metasprite(alienFrames[alienTroop[alien_turn].animStep >> 7], 0, alienTroop[alien_turn].spriteNum, alienTroop[alien_turn].coord.viewportX, alienTroop[alien_turn].coord.viewportY);
-    } else {
-        hide_metasprite(alienFrames[0], alienTroop[alien_turn].spriteNum);
+        moveEntityBullets(scene, &alienTroop[i]);
     }
-
-    moveEntityBullets(scene, &alienTroop[alien_turn]);
-
     if (!alien_turn) alien_turn = NB_ALIENS;
 }

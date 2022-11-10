@@ -144,8 +144,6 @@ int8_t isOutOfScene(Scene_t* scene, Coord_t* coord) {
 }
 
 void updatePlayerPos(Scene_t* scene, Entity_t* entity) {
-    entity->coord.upscaledX += entity->speedX;
-    entity->coord.upscaledY += entity->speedY;
     entity->coord.X = entity->coord.upscaledX >> SCREEN_SCALE;
     entity->coord.Y = entity->coord.upscaledY >> SCREEN_SCALE;
 
@@ -171,8 +169,6 @@ void updatePlayerPos(Scene_t* scene, Entity_t* entity) {
 }
 
 void updateMobPos(Scene_t* scene, Entity_t* entity) {
-    entity->coord.X += entity->speedX;
-    entity->coord.Y += entity->speedY;
     entity->coord.viewportX = entity->coord.X - scene->camera_x;
     entity->coord.viewportY = entity->coord.Y - scene->camera_y;
 }
