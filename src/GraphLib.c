@@ -186,20 +186,12 @@ void setCamera(Scene_t* scene) {
 
     // update hardware scroll position
     SCY_REG = tmpY; SCX_REG = tmpX; 
-    // up or down
-    scene->map_pos_y = (uint8_t)(tmpY >> 3u);
-    if (scene->map_pos_y != scene->old_map_pos_y) { 
-        if (tmpY < scene->old_camera_y) {
-            set_bkg_submap(scene->map_pos_x, scene->map_pos_y, MIN(21u, scene->sceneW - scene->map_pos_x), SCROLL_STEPS, scene->sceneData, scene->sceneW);
-        } else {
-            if ((scene->sceneH - 18u) > scene->map_pos_y)
-                set_bkg_submap(scene->map_pos_x, scene->map_pos_y + 18u, MIN(21u, scene->sceneW - scene->map_pos_x), SCROLL_STEPS, scene->sceneData, scene->sceneW);     
-        }
-        scene->old_map_pos_y = scene->map_pos_y; 
-    }
-    // left or right
+
     scene->map_pos_x = (uint8_t)(tmpX >> 3u);
-    if (scene->map_pos_x != scene->old_map_pos_x) {
+    scene->map_pos_y = (uint8_t)(tmpY >> 3u);
+    // left or right
+
+    if (abs(scene->map_pos_x - scene->old_map_pos_x) >= SCROLL_STEPS) {
         if (tmpX < scene->old_camera_x) {
             set_bkg_submap(scene->map_pos_x, scene->map_pos_y, SCROLL_STEPS, MIN(19u, scene->sceneH - scene->map_pos_y), scene->sceneData, scene->sceneW);     
         } else {
@@ -208,6 +200,17 @@ void setCamera(Scene_t* scene) {
         }
         scene->old_map_pos_x = scene->map_pos_x;
     }
+    // up or down
+    if (abs(scene->map_pos_y - scene->old_map_pos_y) >= SCROLL_STEPS) { 
+        if (tmpY < scene->old_camera_y) {
+            set_bkg_submap(scene->map_pos_x, scene->map_pos_y, MIN(21u, scene->sceneW - scene->map_pos_x), SCROLL_STEPS, scene->sceneData, scene->sceneW);
+        } else {
+            if ((scene->sceneH - 18u) > scene->map_pos_y)
+                set_bkg_submap(scene->map_pos_x, scene->map_pos_y + 18u, MIN(21u, scene->sceneW - scene->map_pos_x), SCROLL_STEPS, scene->sceneData, scene->sceneW);     
+        }
+        scene->old_map_pos_y = scene->map_pos_y; 
+    }
+
     // set old camera position to current camera position
     scene->old_camera_x = tmpX, scene->old_camera_y = tmpY;
 }
