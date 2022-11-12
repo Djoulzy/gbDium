@@ -15,6 +15,7 @@ typedef struct {
     uint8_t cameraStick;
     int16_t upscaledX, upscaledY;
     int16_t X, Y;
+    uint8_t overlapped;
     uint16_t viewportX, viewportY;
 } Coord_t;
 
@@ -40,6 +41,14 @@ typedef struct {
     Bullet_t** bullets;
 } Entity_t;
 
+typedef struct EntityList_t EntityList_t;
+struct EntityList_t {
+    Entity_t* entity;
+    EntityList_t* suiv;
+};
+
+extern Entity_t LAST_ENTITY;
+
 typedef struct {
     const uint8_t* sceneData;                   // Map data
     uint8_t nb_tiles_w, nb_tiles_h;             // map size in tiles
@@ -54,20 +63,20 @@ typedef struct {
     uint16_t sceneWidth, sceneHeight;
 } Scene_t;
 
-extern Bullet_t* allocBullet(uint8_t);
-extern void     setupEntity(Entity_t*, const metasprite_t**, int16_t, int16_t);
-extern void     assignBulletsToEntity(Entity_t*, Bullet_t**, uint8_t, uint8_t);
-extern void     setupScene(Scene_t*, const uint8_t*, uint8_t, uint8_t);
-extern void     setCamera(Scene_t*);
-extern void     updateView(Scene_t*);
-extern void     setCameraStick(Entity_t*);
-extern void     updatePlayerPos(Scene_t*, Entity_t*);
-extern void     updateMobPos(Scene_t*, Entity_t*);
-extern void     moveEntityBullets(Scene_t*, Entity_t*);
-extern void     entityShoot(Entity_t*, int8_t, int8_t, uint8_t);
-extern int8_t   isOutOfScene(Scene_t*, Coord_t*);
-extern uint8_t  isVisible(Coord_t*);
-extern void     destroyEntity(Entity_t*);
-extern void     dumpEntity(Entity_t*);
+extern Bullet_t*    allocBullet(uint8_t);
+extern Entity_t*    allocEntity(const metasprite_t**, int16_t, int16_t);
+extern void         assignBulletsToEntity(Entity_t*, Bullet_t**, uint8_t, uint8_t);
+extern void         setupScene(Scene_t*, const uint8_t*, uint8_t, uint8_t);
+extern void         setCamera(Scene_t*);
+extern void         updateView(Scene_t*);
+extern void         setCameraStick(Entity_t*);
+extern void         updatePlayerPos(Scene_t*, Entity_t*);
+extern void         updateMobPos(Scene_t*, Entity_t*);
+extern void         moveEntityBullets(Scene_t*, Entity_t*, Entity_t**);
+extern void         entityShoot(Entity_t*, int8_t, int8_t, uint8_t);
+extern int8_t       isOutOfScene(Scene_t*, Coord_t*);
+extern uint8_t      isVisible(Coord_t*);
+extern void         destroyEntity(Entity_t*);
+extern void         dumpEntity(Entity_t*);
 
 #endif
