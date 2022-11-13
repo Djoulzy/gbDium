@@ -8,12 +8,9 @@
 #include "player.h"
 #include "../res/alien_tiles.h"
 
-Entity_t* alienTroop[NB_ALIENS+1];
 EntityList_t* alienList = NULL;
-
-Bullet_t* aliens_bullet[NB_ALIENS][1];
+BulletList_t* aliens_bullet[NB_ALIENS];
 uint8_t alien_turn = NB_ALIENS;
-Entity_t* target[2];
 
 const metasprite_t alien1[] = {
     METASPR_ITEM(0, -8, 53, 0), METASPR_ITEM(8, 0, 54, 0), METASPR_ITEM(-8, 8, 55, 0), METASPR_ITEM(8, 0, 56, 0),
@@ -41,31 +38,14 @@ const metasprite_t* const alienFrames[4] = {
 
 void initAliens(void) {
     uint8_t i;
-    EntityList_t *plist, *newElmt;
 
     set_sprite_data(53, 17, alien_tiles);
 
     initrand(DIV_REG);
     for (i = 0; i<NB_ALIENS; i++) {
-        alienTroop[i] = allocEntity(alienFrames, rand() << 2, rand());
-        aliens_bullet[i][0] = allocBullet(69);
-        assignBulletsToEntity(alienTroop[i], aliens_bullet[i], 1, 1);
-
-        newElmt = malloc(sizeof(EntityList_t));
-        newElmt->entity = alienTroop[i];
-        newElmt->suiv = alienList;
-        alienList = newElmt;
-
-        // dumpEntity(&alienTroop[i]);
-    }
-    alienTroop[NB_ALIENS] = &LAST_ENTITY;
-    target[0] = player;
-    target[1] = &LAST_ENTITY;
-
-    plist = alienList;
-    while(plist != NULL) {
-        dumpEntity(plist->entity);
-        plist = plist->suiv;
+        alienList = addEntityToList(alienList, alienFrames, rand() << 2, rand());
+        alienList->entity->shootDelay = 1;
+        prepareBulletList(alienList->entity, 69, 1);
     }
 }
 
@@ -77,48 +57,51 @@ void destroyed(Scene_t* scene, Entity_t* entity) {
     if (entity->animStep > 1) {
         entity->active = FALSE;
         hide_metasprite(alienFrames[0], entity->spriteNum);
-        entity->bullets[0]->active = FALSE;
-        hide_sprite(entity->bullets[0]->spriteNum);
+        // entity->bullets[0]->active = FALSE;
+        // hide_sprite(entity->bullets[0]->spriteNum);
     }
 }
 
+void alienShoot(Entity_t* entity, Coord_t* playerCoord) {
+    int8_t spdx = 0, spdy = 0;
+
+    if (playerCoord->X > entity->coord.X) spdx = ALIEN_SHOOT_SPEED;
+    else if (playerCoord->X < entity->coord.X) spdx = -ALIEN_SHOOT_SPEED;
+    if (playerCoord->Y > entity->coord.Y) spdy = ALIEN_SHOOT_SPEED;
+    else if (playerCoord->Y < entity->coord.Y) spdy = -ALIEN_SHOOT_SPEED;
+    entityShoot(entity, spdx, spdy, 0);
+}
+
 void alienMoves(Scene_t* scene, Coord_t* playerCoord) {
-    uint8_t i;
-    EntityList_t *plist = alienList;
-    int8_t spdx, spdy;
-
+    EntityList_t *p = alienList;
+    
     alien_turn--;
-    for (i = 0; i<NB_ALIENS; i++) {
-        if (alienTroop[i]->active) {
-            if (alienTroop[i]->coord.overlapped) destroyed(scene, alienTroop[i]);
-            else if (i == alien_turn) {
-                if (playerCoord->X > alienTroop[i]->coord.X) alienTroop[i]->speedX = ALIEN_SPEED; else alienTroop[i]->speedX = -ALIEN_SPEED;
-                if (playerCoord->Y > alienTroop[i]->coord.Y) alienTroop[i]->speedY = ALIEN_SPEED; else alienTroop[i]->speedY = -ALIEN_SPEED;
-                alienTroop[i]->coord.X += alienTroop[i]->speedX;
-                alienTroop[i]->coord.Y += alienTroop[i]->speedY;
-                updateMobPos(scene, alienTroop[i]);
+    while(p != NULL) {
+        if (p->entity->active) {
+            if (p->entity->coord.overlapped) destroyed(scene, p->entity);
+            else if (alien_turn) {
+                if (playerCoord->X > p->entity->coord.X) p->entity->speedX = ALIEN_SPEED; else p->entity->speedX = -ALIEN_SPEED;
+                if (playerCoord->Y > p->entity->coord.Y) p->entity->speedY = ALIEN_SPEED; else p->entity->speedY = -ALIEN_SPEED;
+                p->entity->coord.X += p->entity->speedX;
+                p->entity->coord.Y += p->entity->speedY;
+                updateMobPos(scene, p->entity);
                 
-                if (isVisible(&alienTroop[i]->coord)) {
-                    spdx = spdy = 0;
-                    if (!alienTroop[i]->bullets[0]->active) {
-                        if (playerCoord->X > alienTroop[i]->coord.X) spdx = ALIEN_SHOOT_SPEED;
-                        else if (playerCoord->X < alienTroop[i]->coord.X) spdx = -ALIEN_SHOOT_SPEED;
-                        if (playerCoord->Y > alienTroop[i]->coord.Y) spdy = ALIEN_SHOOT_SPEED;
-                        else if (playerCoord->Y < alienTroop[i]->coord.Y) spdy = -ALIEN_SHOOT_SPEED;
-                        entityShoot(alienTroop[i], spdx, spdy, 0);
-                    }
+                if (isVisible(&p->entity->coord)) {
+                    
+                    if (shootOk(p->entity)) alienShoot(p->entity, playerCoord);
 
-                    alienTroop[i]->animStep = abs(alienTroop[i]->animStep -1);
-                    move_metasprite(alienFrames[alienTroop[i]->animStep], 0, alienTroop[i]->spriteNum, alienTroop[i]->coord.viewportX, alienTroop[i]->coord.viewportY);
+                    p->entity->animStep = abs(p->entity->animStep -1);
+                    move_metasprite(alienFrames[p->entity->animStep], 0, p->entity->spriteNum, p->entity->coord.viewportX, p->entity->coord.viewportY);
                 }
             } else {
-                updateMobPos(scene, alienTroop[i]);
-                if (isVisible(&(alienTroop[i]->coord)))
-                    move_metasprite(alienFrames[alienTroop[i]->animStep], 0, alienTroop[i]->spriteNum, alienTroop[i]->coord.viewportX, alienTroop[i]->coord.viewportY);
+                updateMobPos(scene, p->entity);
+                if (isVisible(&(p->entity->coord)))
+                    move_metasprite(alienFrames[p->entity->animStep], 0, p->entity->spriteNum, p->entity->coord.viewportX, p->entity->coord.viewportY);
             }
 
-            moveEntityBullets(scene, alienTroop[i], target);
+            moveEntityBullets(scene, p->entity, player);
         }
+        p = p->suiv;
     }
     if (!alien_turn) alien_turn = NB_ALIENS;
 }
