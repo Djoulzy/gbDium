@@ -277,7 +277,7 @@ void dumpEntity(Entity_t* entity) {
     EMU_printf("ViewPort Coord: %d x %d", entity->coord.viewportX, entity->coord.viewportY);
     EMU_printf("Camera follow: %d", entity->coord.cameraStick);
     while(p != NULL) {
-        EMU_printf("  - Bullets %d: Active: %d Coord: (%d x %d)(%d x %d)", p->entity->spriteNum, p->entity->active, p->entity->coord.upscaledX, p->entity->coord.upscaledY, p->entity->coord.X, p->entity->coord.Y);
+        EMU_printf("  - Bullets %d: Active: %d Coord: (%d x %d)(%d x %d)", p->entity->spriteNum, p->entity->active, p->entity->coord.X, p->entity->coord.Y, p->entity->coord.viewportX, p->entity->coord.viewportY);
         p = p->suiv;
     }
     EMU_printf("-");
