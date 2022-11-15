@@ -38,8 +38,8 @@ typedef struct {
     uint8_t spriteNum;
     int8_t speedX, speedY;
     Coord_t coord;
-    uint8_t animStep;
-    uint8_t animDelay;
+    const uint8_t* anim;
+    int8_t animStep;
     const metasprite_t** frames;
     uint8_t shootDelay;
     uint8_t shootDelayCpt;

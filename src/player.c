@@ -12,8 +12,7 @@ BulletList_t* ship_shoot;
 extern Scene_t scene;
 
 uint8_t props;
-uint16_t retourn_anim;
-int8_t direction, inclinaison;
+int8_t direction;
 uint8_t retournement = FALSE;
 int8_t out = 0;
 
@@ -27,8 +26,9 @@ void initPlayer() {
     prepareBulletList(player->entity, 52, MAX_SHOOT_NUM);
     joypad_init(1, &joypads);
 
-    inclinaison = retourn_anim = 0;
     direction = 1;
+    player->entity->animStep = 0;
+    player->entity->anim = anim_inclinaison;
 }
 
 void playerMove() {
@@ -39,25 +39,28 @@ void playerMove() {
     }
 
     if (joypads.joy0 & J_UP) {
+        player->entity->anim = anim_inclinaison;
         player->entity->speedY -= SHIP_ACCEL;
         if (player->entity->speedY < - MAX_SHIP_SPEED) player->entity->speedY = - MAX_SHIP_SPEED;
-        inclinaison++;
-        if (inclinaison > 16) inclinaison = 16;
+        player->entity->animStep++;
+        if (player->entity->animStep > 19) player->entity->animStep = 19;
     } else if (joypads.joy0 & J_DOWN) {
+        player->entity->anim = anim_inclinaison;
         player->entity->speedY += SHIP_ACCEL;
         if (player->entity->speedY > MAX_SHIP_SPEED) player->entity->speedY = MAX_SHIP_SPEED;
-        inclinaison--;
-        if (inclinaison < -16) inclinaison = -16;
-    } else if (inclinaison != 0) {
-        if (inclinaison > 0) inclinaison--;
-        else inclinaison++;
+        player->entity->animStep--;
+        if (player->entity->animStep < -19) player->entity->animStep = -19;
+    } else if (!retournement && (player->entity->animStep != 0)) {
+        if (player->entity->animStep > 0) player->entity->animStep--;
+        else player->entity->animStep++;
     }
 
     if ((joypads.joy0 & J_LEFT) && (!retournement)) {
         if (direction == 1) {
             // EMU_printf("Go LEFT");
             retournement = TRUE;
-            retourn_anim = 0;
+            player->entity->anim = anim_retournement;
+            player->entity->animStep = 0;
             player->entity->speedX += SHIP_ACCEL;
         } else {
             player->entity->speedX -= SHIP_ACCEL;
@@ -67,7 +70,8 @@ void playerMove() {
         if (direction == -1) {
             // EMU_printf("Go RIGHT");
             retournement = TRUE;
-            retourn_anim = 0;
+            player->entity->anim = anim_retournement;
+            player->entity->animStep = 0;
             player->entity->speedX -= SHIP_ACCEL;
         } else {
             player->entity->speedX += SHIP_ACCEL;
@@ -90,35 +94,37 @@ void playerMove() {
     if (out) {
         if (out & (OUT_LEFT|OUT_RIGHT)) {
             retournement = TRUE;
-            retourn_anim = 0;
+            player->entity->anim = anim_retournement;
+            player->entity->animStep = 0;
             player->entity->speedX = 0;
         } else player->entity->speedY = 0;
     }
 
     if (retournement) {
         if (direction >= 0)
-            move_metasprite(ship_meta[SHIP_RETURN_FRAME + (retourn_anim >> 2)], 0, player->entity->spriteNum, player->entity->coord.viewportX, player->entity->coord.viewportY);
+            move_metasprite(ship_meta[player->entity->anim[player->entity->animStep]], 0, player->entity->spriteNum, player->entity->coord.viewportX, player->entity->coord.viewportY);
         else
-            move_metasprite_vflip(ship_meta[SHIP_RETURN_FRAME + (retourn_anim >> 2)], 0, player->entity->spriteNum, player->entity->coord.viewportX, player->entity->coord.viewportY);
-        retourn_anim++;
-        if (retourn_anim > 20) {
+            move_metasprite_vflip(ship_meta[player->entity->anim[player->entity->animStep]], 0, player->entity->spriteNum, player->entity->coord.viewportX, player->entity->coord.viewportY);
+        player->entity->animStep++;
+        if (player->entity->animStep > 23) {
             retournement = FALSE;
-            inclinaison = 16;
+            player->entity->anim = anim_inclinaison;
+            player->entity->animStep = 19;
             direction *= -1;
             player->entity->speedX = SHIP_ACCEL * direction;
         }
     } else {
         if (direction >= 0) {
-            if (inclinaison >= 0)
-                move_metasprite(ship_meta[abs(inclinaison >> 2)], 0, player->entity->spriteNum, player->entity->coord.viewportX, player->entity->coord.viewportY);
+            if (player->entity->animStep >= 0)
+                move_metasprite(ship_meta[player->entity->anim[abs(player->entity->animStep)]], 0, player->entity->spriteNum, player->entity->coord.viewportX, player->entity->coord.viewportY);
             else {
-                move_metasprite_hflip(ship_meta[abs(inclinaison >> 2)], 0, player->entity->spriteNum, player->entity->coord.viewportX, player->entity->coord.viewportY+16);
+                move_metasprite_hflip(ship_meta[player->entity->anim[abs(player->entity->animStep)]], 0, player->entity->spriteNum, player->entity->coord.viewportX, player->entity->coord.viewportY+16);
             }
         }
         else {
-            if (inclinaison >= 0)
-                move_metasprite_vflip(ship_meta[abs(inclinaison >> 2)], 0, player->entity->spriteNum, player->entity->coord.viewportX, player->entity->coord.viewportY);
-            else move_metasprite_hvflip(ship_meta[abs(inclinaison >> 2)], 0, player->entity->spriteNum, player->entity->coord.viewportX, player->entity->coord.viewportY+16);
+            if (player->entity->animStep >= 0)
+                move_metasprite_vflip(ship_meta[player->entity->anim[abs(player->entity->animStep)]], 0, player->entity->spriteNum, player->entity->coord.viewportX, player->entity->coord.viewportY);
+            else move_metasprite_hvflip(ship_meta[player->entity->anim[abs(player->entity->animStep)]], 0, player->entity->spriteNum, player->entity->coord.viewportX, player->entity->coord.viewportY+16);
         }
     }
 

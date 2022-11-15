@@ -1,5 +1,4 @@
 #include <gb/gb.h>
-#include <gbdk/emu_debug.h>
 #include <gbdk/platform.h>
 #include <stdlib.h>
 #include <rand.h>

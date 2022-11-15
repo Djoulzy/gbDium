@@ -74,3 +74,6 @@ const metasprite_t* const ship_meta[13] = {
     ship_retournement1, ship_retournement2, ship_retournement3, ship_retournement4, ship_retournement5, ship_retournement6,
     ship_boom1, ship_boom2
 };
+
+const uint8_t anim_inclinaison[20] = {0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4};
+const uint8_t anim_retournement[24] = {5,5,5,5,6,6,6,6,7,7,7,7,8,8,8,8,9,9,9,9,10,10,10,10};
