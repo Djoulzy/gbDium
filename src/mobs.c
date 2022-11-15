@@ -57,8 +57,8 @@ void destroyed(Scene_t* scene, Entity_t* entity) {
     if (entity->animStep > 1) {
         entity->active = FALSE;
         hide_metasprite(alienFrames[0], entity->spriteNum);
-        // entity->bullets[0]->active = FALSE;
-        // hide_sprite(entity->bullets[0]->spriteNum);
+        entity->bullets->entity->active = FALSE;
+        hide_sprite(entity->bullets->entity->spriteNum);
     }
 }
 
