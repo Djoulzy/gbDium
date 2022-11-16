@@ -35,6 +35,9 @@ const metasprite_t* const alienFrames[4] = {
     alien1, alien2, alien_boom1, alien_boom2
 };
 
+const uint8_t anim_mobs[20] = {0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1};
+const uint8_t anim_boom[20] = {2,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,3,3};
+
 void initAliens(void) {
     uint8_t i;
 
@@ -51,9 +54,9 @@ void initAliens(void) {
 void destroyed(Scene_t* scene, Entity_t* entity) {
     updateMobPos(scene, entity);
     if (isVisible(&entity->coord))
-        move_metasprite(alienFrames[entity->animStep+2], 0, entity->spriteNum, entity->coord.viewportX, entity->coord.viewportY);
+        move_metasprite(alienFrames[anim_boom[entity->animStep]], 0, entity->spriteNum, entity->coord.viewportX, entity->coord.viewportY);
     entity->animStep++;
-    if (entity->animStep > 1) {
+    if (entity->animStep > 19) {
         entity->active = FALSE;
         hide_metasprite(alienFrames[0], entity->spriteNum);
         entity->bullets->entity->active = FALSE;
@@ -89,13 +92,14 @@ void alienMoves(Scene_t* scene, Coord_t* playerCoord) {
                     
                     if (shootOk(p->entity)) alienShoot(p->entity, playerCoord);
 
-                    p->entity->animStep = abs(p->entity->animStep -1);
-                    move_metasprite(alienFrames[p->entity->animStep], 0, p->entity->spriteNum, p->entity->coord.viewportX, p->entity->coord.viewportY);
+                    p->entity->animStep++;
+                    if (p->entity->animStep > 19) p->entity->animStep = 0;
+                    move_metasprite(alienFrames[anim_mobs[p->entity->animStep]], 0, p->entity->spriteNum, p->entity->coord.viewportX, p->entity->coord.viewportY);
                 }
             } else {
                 updateMobPos(scene, p->entity);
                 if (isVisible(&(p->entity->coord)))
-                    move_metasprite(alienFrames[p->entity->animStep], 0, p->entity->spriteNum, p->entity->coord.viewportX, p->entity->coord.viewportY);
+                    move_metasprite(alienFrames[anim_mobs[p->entity->animStep]], 0, p->entity->spriteNum, p->entity->coord.viewportX, p->entity->coord.viewportY);
             }
 
             moveEntityBullets(scene, p->entity, player);
