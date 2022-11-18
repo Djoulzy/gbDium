@@ -111,11 +111,13 @@ void moveEntityBullets(Scene_t* scene, Entity_t* entity, EntityList_t* target) {
             p->entity->coord.viewportY = p->entity->coord.Y - scene->camera_y;
 
             while(target != NULL) {
-                if (overlap(&(p->entity->coord), &(target->entity->coord))) {
-                    target->entity->coord.overlapped = TRUE;
-                    target->entity->animStep = 0;
-                    collision = TRUE;
-                    break;
+                if (target->entity->active) {
+                    if (overlap(&(p->entity->coord), &(target->entity->coord))) {
+                        target->entity->coord.overlapped = TRUE;
+                        target->entity->animStep = 0;
+                        collision = TRUE;
+                        break;
+                    }
                 }
                 target = target->suiv;
             }
