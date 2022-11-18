@@ -10,7 +10,7 @@
   Compression          : None.
   Counter              : None.
   Tile size            : 8 x 8
-  Tiles                : 0 to 44
+  Tiles                : 0 to 52
 
   Palette colors       : Included.
   SGB Palette          : None.
@@ -144,6 +144,14 @@
 #define ShipCGB42 0
 #define ShipCGB43 0
 #define ShipCGB44 0
+#define ShipCGB45 0
+#define ShipCGB46 0
+#define ShipCGB47 0
+#define ShipCGB48 0
+#define ShipCGB49 0
+#define ShipCGB50 0
+#define ShipCGB51 0
+#define ShipCGB52 0
 /* Start of tile array. */
 extern unsigned char Ship[];
 

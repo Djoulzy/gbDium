@@ -59,7 +59,21 @@ const metasprite_t ship_retournement6[] = {
     METASPR_TERM
 };
 
-const metasprite_t* const ship_meta[11] = {
-    ship_normal, ship_up1, ship_up2, ship_up3, ship_up4,
-    ship_retournement1, ship_retournement2, ship_retournement3, ship_retournement4, ship_retournement5, ship_retournement6
+const metasprite_t ship_boom1[] = {
+    METASPR_ITEM(0, -8, 44, 0), METASPR_ITEM(8, 0, 45, 0), METASPR_ITEM(-8, 8, 46, 0), METASPR_ITEM(8, 0, 47, 0),
+    METASPR_TERM
 };
+
+const metasprite_t ship_boom2[] = {
+    METASPR_ITEM(0, -8, 48, 0), METASPR_ITEM(8, 0, 49, 0), METASPR_ITEM(-8, 8, 51, 0), METASPR_ITEM(8, 0, 52, 0),
+    METASPR_TERM
+};
+
+const metasprite_t* const ship_meta[13] = {
+    ship_normal, ship_up1, ship_up2, ship_up3, ship_up4,
+    ship_retournement1, ship_retournement2, ship_retournement3, ship_retournement4, ship_retournement5, ship_retournement6,
+    ship_boom1, ship_boom2
+};
+
+const uint8_t anim_inclinaison[20] = {0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4};
+const uint8_t anim_retournement[24] = {5,5,5,5,6,6,6,6,7,7,7,7,8,8,8,8,9,9,9,9,10,10,10,10};

@@ -1,7 +1,5 @@
 #include <gb/gb.h>
-#include <gbdk/emu_debug.h>
 #include <stdint.h>
-
 #include <gbdk/platform.h>
 #include <gbdk/metasprites.h>
 #include "GraphLib.h"
@@ -35,8 +33,7 @@ void main(void)
     SCX_REG = 0; SCY_REG = 0;
     while(1) {
         playerMove();
-        moveEntityBullets(&scene, &player);
-        alienMoves(&scene, &(player.coord));
+        alienMoves(&scene, &(player->entity->coord));
         updateView(&scene);
     }
 }

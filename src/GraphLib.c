@@ -5,75 +5,132 @@
 
 uint8_t spritesCount = 0;
 
+Entity_t LAST_ENTITY = { .active = 255 };
+
 Bullet_t* allocBullet(uint8_t tileNum) {
     Bullet_t* bullet = malloc(sizeof(Bullet_t));
+
     bullet->spriteNum = spritesCount;
     // EMU_printf("new sprite: %d", shoot->spriteNum);
     spritesCount++;
     bullet->active = FALSE;
-    bullet->speedX = bullet->speedY = 0;
-    bullet->coord.X = bullet->coord.Y = 0;
     bullet->coord.cameraStick = FALSE;
+    bullet->coord.overlapped = FALSE;
     set_sprite_tile(bullet->spriteNum, tileNum);
     return bullet;
 }
 
-void setupEntity(Entity_t* entity, const metasprite_t** frames, int16_t X, int16_t Y) {
+BulletList_t* addBulletToList(BulletList_t* list, uint8_t tileNum) {
+    BulletList_t *newElmt;
+
+    newElmt = malloc(sizeof(BulletList_t));
+    newElmt->entity = allocBullet(tileNum);
+    newElmt->suiv = list;
+    return newElmt;
+}
+
+void prepareBulletList(Entity_t* entity, uint8_t tileNum, uint8_t size) {
+    for (uint8_t i = 0; i<size; i++) {
+        entity->bullets = addBulletToList(entity->bullets, tileNum);
+    }
+    entity->availableBullet = entity->bullets;
+}
+
+uint8_t shootOk(Entity_t* entity) {
+    if ((entity->availableBullet != NULL) && (!entity->shootDelayCpt))
+        return TRUE;
+    else return FALSE;
+}
+
+void entityShoot(Entity_t* entity, int8_t spdx, int8_t spdy, uint8_t props) {
+    entity->availableBullet->entity->speedX = spdx;
+    entity->availableBullet->entity->speedY = spdy;
+
+    entity->availableBullet->entity->active = TRUE;
+
+    entity->availableBullet->entity->coord = entity->coord;
+
+    if (props) set_sprite_prop(entity->availableBullet->entity->spriteNum, props);
+    entity->shootDelayCpt = entity->shootDelay;
+    entity->availableBullet = entity->availableBullet->suiv;
+}
+
+Entity_t*  allocEntity(const metasprite_t** frames, int16_t X, int16_t Y) {
+    Entity_t* entity = malloc(sizeof(Entity_t));
+
     entity->spriteNum = spritesCount;
     spritesCount += 4;
-    entity->active = FALSE;
+    entity->active = TRUE;
     entity->coord.X = X;
     entity->coord.Y = Y;
+    entity->coord.overlapped = FALSE;
     entity->coord.upscaledX = X << SCREEN_SCALE;
     entity->coord.upscaledY = Y << SCREEN_SCALE;
     entity->speedX = entity->speedY = 0;
     entity->animStep = 0;
     entity->frames = frames;
     entity->bullets = NULL;
-}
-
-void assignBulletsToEntity(Entity_t* entity, Bullet_t** bullets, uint8_t size, uint8_t delay) {
-    entity->bullets = bullets;
-    entity->nb_shoots = size;
-    entity->availableShoot = 0;
-    entity->shootDelay = delay;
     entity->shootDelayCpt = 0;
+
+    return entity;
 }
 
-void entityShoot(Entity_t* entity, int8_t spdx, int8_t spdy, uint8_t props) {
-    if ((entity->availableShoot < entity->nb_shoots) && (!entity->shootDelayCpt)) {
-        entity->bullets[entity->availableShoot]->speedX = spdx;
-        entity->bullets[entity->availableShoot]->speedY = spdy;
+EntityList_t* addEntityToList(EntityList_t* list, const metasprite_t** frames, int16_t X, int16_t Y) {
+    EntityList_t *newElmt;
 
-        entity->bullets[entity->availableShoot]->active = TRUE;
-
-        entity->bullets[entity->availableShoot]->coord.X = entity->coord.X;
-        entity->bullets[entity->availableShoot]->coord.Y = entity->coord.Y;
-
-        if (props) set_sprite_prop(entity->bullets[entity->availableShoot]->spriteNum, props);
-        entity->shootDelayCpt = entity->shootDelay;
-        entity->availableShoot = entity->nb_shoots;
-    }
+    newElmt = malloc(sizeof(EntityList_t));
+    newElmt->entity = allocEntity(frames, X, Y);
+    list->prec = newElmt;
+    newElmt->suiv = list;
+    return newElmt;
 }
 
-void moveEntityBullets(Scene_t* scene, Entity_t* entity) {
-    for (uint8_t i = 0; i < entity->nb_shoots; i++) {
-        if (entity->bullets[i]->active) {
-            // dumpEntity(entity);
+// UINT8 collision(UINT8 x1, UINT8 y1, UINT8 w1, UINT8 h1, UINT8 x2, UINT8 y2, UINT8 w2, UINT8 h2) {  //boudingbox
+//     return x1 < x2+w2 &&
+//          x2 < x1+w1 &&
+//          y1 < y2+h2 &&
+//          y2 < y1+h1;
+//     }
 
-            entity->bullets[i]->coord.X += entity->bullets[i]->speedX;
-            entity->bullets[i]->coord.Y += entity->bullets[i]->speedY;
-            entity->bullets[i]->coord.viewportX = entity->bullets[i]->coord.X - scene->camera_x;
-            entity->bullets[i]->coord.viewportY = entity->bullets[i]->coord.Y - scene->camera_y;
+uint8_t overlap(Coord_t* obj1, Coord_t* obj2) {
+    return obj1->viewportX < obj2->viewportX+16 &&
+         obj2->viewportX < obj1->viewportX+8 &&
+         obj1->viewportY < obj2->viewportY+8 &&
+         obj2->viewportY < obj1->viewportY+16;
+}
 
-            if (isVisible(&(entity->bullets[i]->coord))) {
-                move_sprite(entity->bullets[i]->spriteNum, entity->bullets[i]->coord.viewportX, entity->bullets[i]->coord.viewportY);
-            } else {
-                entity->bullets[i]->active = FALSE;
-                entity->availableShoot = i;
-                hide_sprite(entity->bullets[i]->spriteNum);
+void moveEntityBullets(Scene_t* scene, Entity_t* entity, EntityList_t* target) {
+    uint8_t collision = FALSE;
+    BulletList_t *p = entity->bullets;
+
+    while(p != NULL) {
+        if (p->entity->active) {
+            p->entity->coord.X += p->entity->speedX;
+            p->entity->coord.Y += p->entity->speedY;
+            p->entity->coord.viewportX = p->entity->coord.X - scene->camera_x;
+            p->entity->coord.viewportY = p->entity->coord.Y - scene->camera_y;
+
+            while(target != NULL) {
+                if (target->entity->active) {
+                    if (overlap(&(p->entity->coord), &(target->entity->coord))) {
+                        target->entity->coord.overlapped = TRUE;
+                        target->entity->animStep = 0;
+                        collision = TRUE;
+                        break;
+                    }
+                }
+                target = target->suiv;
             }
-        } else entity->availableShoot = i;
+
+            if (!collision && isVisible(&(p->entity->coord))) {
+                move_sprite(p->entity->spriteNum, p->entity->coord.viewportX, p->entity->coord.viewportY);
+            } else {
+                p->entity->active = FALSE;
+                entity->availableBullet = p;
+                hide_sprite(p->entity->spriteNum);
+            }
+        } else entity->availableBullet = p;
+        p = p->suiv;
     }
     if (entity->shootDelayCpt) entity->shootDelayCpt--;
 }
@@ -150,16 +207,11 @@ void updatePlayerPos(Scene_t* scene, Entity_t* entity) {
     if (entity->coord.cameraStick) {
         if ((entity->coord.X >= scene->startScrollZoneX) && (entity->coord.X <= scene->endScrollZoneX)) {
             scene->camera_x = entity->coord.X - scene->startScrollZoneX;
-            // if (scene->camera_x > scene->camera_max_x) scene->camera_x = scene->camera_max_x;
-            // if (scene->camera_x < 0) scene->camera_x = 0;
             scene->redraw = TRUE;
         }
         
         if ((entity->coord.Y >= scene->startScrollZoneY) && (entity->coord.Y <= scene->endScrollZoneY)) {
             scene->camera_y = entity->coord.Y - scene->startScrollZoneY;
-            // EMU_printf("CamX: %d (%d) - CamY: %d (%d) - AbsX: %d - AbsY: %d - ShpX: %d - ShpY: %d", camera_x, camera_max_x, camera_y, camera_max_y, ShipAbsX, ShipAbsY, tmpX, tmpY);
-            // if (scene->camera_y > scene->camera_max_y) scene->camera_y = scene->camera_max_y;
-            // if (scene->camera_y < 0) scene->camera_y = 0;
             scene->redraw = TRUE;
         }
     }
@@ -214,22 +266,21 @@ void updateView(Scene_t* scene) {
 }
 
 void destroyEntity(Entity_t* entity) {
-    for (uint8_t i = 0; i < entity->nb_shoots; i++)
-        free(entity->bullets[i]);
+    // for (uint8_t i = 0; i < entity->nb_shoots; i++)
+    //     free(entity->bullets[i]);
 }
 
 void dumpEntity(Entity_t* entity) {
-    Bullet_t *b;
+    BulletList_t *p = entity->bullets;
 
     EMU_printf("=== Enity: %d ===", entity->spriteNum);
     EMU_printf("Active: %d", entity->active);
-    EMU_printf("Scene Coord: %d x %d", entity->coord.upscaledX, entity->coord.upscaledY);
-    EMU_printf("ViewPort Coord: %d x %d", entity->coord.X, entity->coord.Y);
+    EMU_printf("Scene Coord: %d x %d", entity->coord.X, entity->coord.Y);
+    EMU_printf("ViewPort Coord: %d x %d", entity->coord.viewportX, entity->coord.viewportY);
     EMU_printf("Camera follow: %d", entity->coord.cameraStick);
-    EMU_printf("Max Bullets: %d", entity->nb_shoots);
-    for(uint8_t i = 0; i<entity->nb_shoots; i++) {
-        b = entity->bullets[i];
-        EMU_printf("  %d) Bullets %d: Active: %d Coord: (%d x %d)(%d x %d)", i, b->spriteNum, b->active, b->coord.upscaledX, b->coord.upscaledY, b->coord.X, b->coord.Y);
+    while(p != NULL) {
+        EMU_printf("  - Bullets %d: Active: %d Coord: (%d x %d)(%d x %d)", p->entity->spriteNum, p->entity->active, p->entity->coord.X, p->entity->coord.Y, p->entity->coord.viewportX, p->entity->coord.viewportY);
+        p = p->suiv;
     }
     EMU_printf("-");
 }
