@@ -66,11 +66,15 @@ void alienMoves(Scene_t* scene, Coord_t* playerCoord) {
     while(p != NULL) {
         if (p->entity->active) {
             if (p->entity->coord.overlapped) destroyed(scene, p->entity);
-            else if (alien_turn) {
-                if (playerCoord->X > p->entity->coord.X) p->entity->speedX = ALIEN_SPEED; else p->entity->speedX = -ALIEN_SPEED;
-                if (playerCoord->Y > p->entity->coord.Y) p->entity->speedY = ALIEN_SPEED; else p->entity->speedY = -ALIEN_SPEED;
-                p->entity->coord.X += p->entity->speedX;
-                p->entity->coord.Y += p->entity->speedY;
+            else if (!alien_turn) {
+                if (playerCoord->X > p->entity->coord.X) p->entity->speedX += ALIEN_SPEED; else p->entity->speedX -= ALIEN_SPEED;
+                if (p->entity->speedX > 16) p->entity->speedX = 16;
+                if (p->entity->speedX < -16) p->entity->speedX = -16;
+                if (playerCoord->Y > p->entity->coord.Y) p->entity->speedY += ALIEN_SPEED; else p->entity->speedY -= ALIEN_SPEED;
+                if (p->entity->speedY > 16) p->entity->speedY = 16;
+                if (p->entity->speedY < -16) p->entity->speedY = -16;
+                p->entity->coord.X += p->entity->speedX >> 4;
+                p->entity->coord.Y += p->entity->speedY >> 4;
                 updateMobPos(scene, p->entity);
                 
                 if (isVisible(&p->entity->coord)) {
@@ -91,5 +95,5 @@ void alienMoves(Scene_t* scene, Coord_t* playerCoord) {
         }
         p = p->suiv;
     }
-    if (!alien_turn) alien_turn = NB_ALIENS;
+    if (!alien_turn) alien_turn = 4;
 }

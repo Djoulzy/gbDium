@@ -4,8 +4,8 @@
 #include "GraphLib.h"
 
 #define NB_ALIENS           5
-#define ALIEN_SPEED         1
-#define ALIEN_SHOOT_SPEED   2
+#define ALIEN_SPEED         2
+#define ALIEN_SHOOT_SPEED   1
 #define DELAY_COUNT         2
 
 extern const metasprite_t* const alienFrames[];
