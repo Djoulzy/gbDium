@@ -12,7 +12,7 @@
 Scene_t scene;
 
 void init_gfx() {
-    SPRITES_8x8;
+    SPRITES_8x16;
     DISPLAY_OFF;
 
     set_bkg_data(0, 10, scene_tiles);

@@ -11,7 +11,8 @@ LCC = $(GBDK_HOME)bin/lcc
 # RUNNER = $(GBDK_HOME)bin/visualboyadvance-m.app/Contents/MacOS/visualboyadvance-m
 # RUNNER = $(GBDK_HOME)bin/SameBoy.app/Contents/MacOS/SameBoy
 # RUNNER = $(GBDK_HOME)bin/mGBA.app/Contents/MacOS/mGBA
-RUNNER = $(GBDK_HOME)bgb/bgb.exe
+# RUNNER = $(GBDK_HOME)bgb/bgb.exe
+RUNNER = $(GBDK_HOME)Emulicious/Emulicious.jar -scale 4
 
 
 # You can set flags for LCC here
@@ -31,10 +32,11 @@ OBJS		= $(CSOURCES:%.c=$(OBJDIR)/%.o) $(ASMSOURCES:%.s=$(OBJDIR)/%.o)
 
 all: default
 
-test: clean default
+test: default
 # $(RUNNER) $(BINS) &
 # open $(BINS) -a $(RUNNER)
-	/usr/local/bin/wine64 $(RUNNER) $(BINS) &
+# /usr/local/bin/wine64 $(RUNNER) $(BINS) &
+	java -jar $(RUNNER) $(BINS) &
 
 default: ${OBJS} $(BINS)
 

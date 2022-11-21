@@ -11,25 +11,10 @@ EntityList_t* alienList = NULL;
 BulletList_t* aliens_bullet[NB_ALIENS];
 uint8_t alien_turn = NB_ALIENS;
 
-const metasprite_t alien1[] = {
-    METASPR_ITEM(0, -8, 53, 0), METASPR_ITEM(8, 0, 54, 0), METASPR_ITEM(-8, 8, 55, 0), METASPR_ITEM(8, 0, 56, 0),
-    METASPR_TERM
-};
-
-const metasprite_t alien2[] = {
-    METASPR_ITEM(0, -8, 57, 0), METASPR_ITEM(8, 0, 58, 0), METASPR_ITEM(-8, 8, 59, 0), METASPR_ITEM(8, 0, 60, 0),
-    METASPR_TERM
-};
-
-const metasprite_t alien_boom1[] = {
-    METASPR_ITEM(0, -8, 61, 0), METASPR_ITEM(8, 0, 62, 0), METASPR_ITEM(-8, 8, 63, 0), METASPR_ITEM(8, 0, 64, 0),
-    METASPR_TERM
-};
-
-const metasprite_t alien_boom2[] = {
-    METASPR_ITEM(0, -8, 65, 0), METASPR_ITEM(8, 0, 66, 0), METASPR_ITEM(-8, 8, 67, 0), METASPR_ITEM(8, 0, 68, 0),
-    METASPR_TERM
-};
+const metasprite_t alien1[]         = { METASPR_ITEM(0, -8, 54, 0), METASPR_ITEM(0, 8, 56, 0), METASPR_TERM };
+const metasprite_t alien2[]         = { METASPR_ITEM(0, -8, 58, 0), METASPR_ITEM(0, 8, 60, 0), METASPR_TERM };
+const metasprite_t alien_boom1[]    = { METASPR_ITEM(0, -8, 62, 0), METASPR_ITEM(0, 8, 64, 0), METASPR_TERM };
+const metasprite_t alien_boom2[]    = { METASPR_ITEM(0, -8, 66, 0), METASPR_ITEM(0, 8, 68, 0), METASPR_TERM };
 
 const metasprite_t* const alienFrames[4] = {
     alien1, alien2, alien_boom1, alien_boom2
@@ -41,13 +26,13 @@ const uint8_t anim_boom[20] = {2,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,3,3};
 void initAliens(void) {
     uint8_t i;
 
-    set_sprite_data(53, 17, alien_tiles);
+    set_sprite_data(54, 18, alien_tiles);
 
     initrand(DIV_REG);
     for (i = 0; i<NB_ALIENS; i++) {
         alienList = addEntityToList(alienList, alienFrames, rand() << 2, rand());
         alienList->entity->shootDelay = 1;
-        prepareBulletList(alienList->entity, 69, 1);
+        prepareBulletList(alienList->entity, 70, 1);
     }
 }
 

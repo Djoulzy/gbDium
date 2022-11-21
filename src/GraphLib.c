@@ -12,7 +12,7 @@ Bullet_t* allocBullet(uint8_t tileNum) {
 
     bullet->spriteNum = spritesCount;
     // EMU_printf("new sprite: %d", shoot->spriteNum);
-    spritesCount++;
+    spritesCount += 2;
     bullet->active = FALSE;
     bullet->coord.cameraStick = FALSE;
     bullet->coord.overlapped = FALSE;
@@ -59,7 +59,7 @@ Entity_t*  allocEntity(const metasprite_t** frames, int16_t X, int16_t Y) {
     Entity_t* entity = malloc(sizeof(Entity_t));
 
     entity->spriteNum = spritesCount;
-    spritesCount += 4;
+    spritesCount += 2;
     entity->active = TRUE;
     entity->coord.X = X;
     entity->coord.Y = Y;

@@ -17,7 +17,7 @@ uint8_t retournement = FALSE;
 int8_t out = 0;
 
 void initPlayer() {
-    set_sprite_data(0, 53, Ship);
+    set_sprite_data(0, 54, Ship);
 
     player = addEntityToList(player, ship_meta, START_SCROLL_X, START_SCROLL_Y);
     setCameraStick(player->entity);

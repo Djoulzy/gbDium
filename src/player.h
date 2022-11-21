@@ -3,7 +3,7 @@
 
 #include "GraphLib.h"
 
-#define MAX_SHOOT_NUM       6
+#define MAX_SHOOT_NUM       3
 #define SHOOT_DELAY         10
 #define MAX_SHIP_SPEED      32
 #define SHIP_ACCEL          2

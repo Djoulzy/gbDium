@@ -9,8 +9,8 @@
   Format               : Gameboy 4 color.
   Compression          : None.
   Counter              : None.
-  Tile size            : 8 x 8
-  Tiles                : 0 to 52
+  Tile size            : 8 x 16
+  Tiles                : 0 to 26
 
   Palette colors       : Included.
   SGB Palette          : None.
@@ -126,32 +126,6 @@
 #define ShipCGB24 0
 #define ShipCGB25 0
 #define ShipCGB26 0
-#define ShipCGB27 0
-#define ShipCGB28 0
-#define ShipCGB29 0
-#define ShipCGB30 0
-#define ShipCGB31 0
-#define ShipCGB32 0
-#define ShipCGB33 0
-#define ShipCGB34 0
-#define ShipCGB35 0
-#define ShipCGB36 0
-#define ShipCGB37 0
-#define ShipCGB38 0
-#define ShipCGB39 0
-#define ShipCGB40 0
-#define ShipCGB41 0
-#define ShipCGB42 0
-#define ShipCGB43 0
-#define ShipCGB44 0
-#define ShipCGB45 0
-#define ShipCGB46 0
-#define ShipCGB47 0
-#define ShipCGB48 0
-#define ShipCGB49 0
-#define ShipCGB50 0
-#define ShipCGB51 0
-#define ShipCGB52 0
 /* Start of tile array. */
 extern unsigned char Ship[];
 
