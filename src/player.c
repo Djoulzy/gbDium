@@ -12,7 +12,6 @@ BulletList_t* ship_shoot;
 extern Scene_t scene;
 
 uint8_t props;
-int8_t direction;
 uint8_t retournement = FALSE;
 int8_t out = 0;
 
@@ -26,7 +25,7 @@ void initPlayer() {
     prepareBulletList(player->entity, 52, MAX_SHOOT_NUM);
     joypad_init(1, &joypads);
 
-    direction = 1;
+    player->entity->coord.direction = 1;
     player->entity->animStep = 0;
     player->entity->anim = anim_inclinaison;
 }
@@ -56,7 +55,7 @@ void playerMove() {
     }
 
     if ((joypads.joy0 & J_LEFT) && (!retournement)) {
-        if (direction == 1) {
+        if (player->entity->coord.direction == 1) {
             // EMU_printf("Go LEFT");
             retournement = TRUE;
             player->entity->anim = anim_retournement;
@@ -67,7 +66,7 @@ void playerMove() {
             if (player->entity->speedX < - MAX_SHIP_SPEED) player->entity->speedX = - MAX_SHIP_SPEED;
         }
     } else if ((joypads.joy0 & J_RIGHT)&& (!retournement)) {
-        if (direction == -1) {
+        if (player->entity->coord.direction == -1) {
             // EMU_printf("Go RIGHT");
             retournement = TRUE;
             player->entity->anim = anim_retournement;
@@ -81,9 +80,9 @@ void playerMove() {
 
     if (joypads.joy0 & J_A) {
         if (!retournement) {
-            if (direction < 0) props = S_FLIPX;
+            if (player->entity->coord.direction < 0) props = S_FLIPX;
             else props = 0;
-            if (shootOk(player->entity)) entityShoot(player->entity, direction * SHOOT_SPEED, 0, props);
+            if (shootOk(player->entity)) entityShoot(player->entity, player->entity->coord.direction * SHOOT_SPEED, 0, props);
         }
     }
 
@@ -101,7 +100,7 @@ void playerMove() {
     }
 
     if (retournement) {
-        if (direction >= 0)
+        if (player->entity->coord.direction >= 0)
             move_metasprite(ship_meta[player->entity->anim[player->entity->animStep]], 0, player->entity->spriteNum, player->entity->coord.viewportX, player->entity->coord.viewportY);
         else
             move_metasprite_vflip(ship_meta[player->entity->anim[player->entity->animStep]], 0, player->entity->spriteNum, player->entity->coord.viewportX, player->entity->coord.viewportY);
@@ -110,11 +109,11 @@ void playerMove() {
             retournement = FALSE;
             player->entity->anim = anim_inclinaison;
             player->entity->animStep = 19;
-            direction *= -1;
-            player->entity->speedX = SHIP_ACCEL * direction;
+            player->entity->coord.direction *= -1;
+            player->entity->speedX = SHIP_ACCEL * player->entity->coord.direction;
         }
     } else {
-        if (direction >= 0) {
+        if (player->entity->coord.direction >= 0) {
             if (player->entity->animStep >= 0)
                 move_metasprite(ship_meta[player->entity->anim[abs(player->entity->animStep)]], 0, player->entity->spriteNum, player->entity->coord.viewportX, player->entity->coord.viewportY);
             else {

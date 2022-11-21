@@ -154,7 +154,7 @@ void setupScene(Scene_t* tmp, const uint8_t* sceneData, uint8_t nb_tiles_w, uint
     tmp->sceneHeight = nb_tiles_h << 3;
     tmp->startScrollZoneX = START_SCROLL_X;
     tmp->startScrollZoneY = START_SCROLL_Y;
-    tmp->endScrollZoneX = tmp->sceneWidth - START_SCROLL_X;
+    tmp->endScrollZoneX = tmp->sceneWidth - 160 + START_SCROLL_X;
     tmp->endScrollZoneY = tmp->sceneHeight - START_SCROLL_Y;
 }
 
@@ -206,7 +206,8 @@ void updatePlayerPos(Scene_t* scene, Entity_t* entity) {
 
     if (entity->coord.cameraStick) {
         if ((entity->coord.X >= scene->startScrollZoneX) && (entity->coord.X <= scene->endScrollZoneX)) {
-            scene->camera_x = entity->coord.X - scene->startScrollZoneX;
+            if (entity->coord.direction > 0) scene->camera_x = entity->coord.X - scene->startScrollZoneX;
+            else scene->camera_x = entity->coord.X - 160 + scene->startScrollZoneX;
             scene->redraw = TRUE;
         }
         

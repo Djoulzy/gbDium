@@ -15,6 +15,7 @@ typedef struct {
     uint8_t cameraStick;
     int16_t upscaledX, upscaledY;
     int16_t X, Y;
+    int8_t direction;
     uint8_t overlapped;
     uint16_t viewportX, viewportY;
 } Coord_t;
