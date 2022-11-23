@@ -48,5 +48,4 @@
 .tmp_versions/
 obj/*
 !obj/.gitkeep
-gbDium.gb
-gbDium.ihx
+gbDium.*

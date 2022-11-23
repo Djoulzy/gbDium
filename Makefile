@@ -17,7 +17,7 @@ RUNNER = $(GBDK_HOME)Emulicious/Emulicious.jar -scale 4
 
 # You can set flags for LCC here
 # For example, you can uncomment the line below to turn on debug output
-# LCCFLAGS = -debug
+LCCFLAGS = -debug
 
 # You can set the name of the .gb ROM file here
 PROJECTNAME    = gbDium
