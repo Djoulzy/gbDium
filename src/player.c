@@ -58,6 +58,7 @@ void playerMove() {
         if (player->entity->coord.direction == 1) {
             // EMU_printf("Go LEFT");
             retournement = TRUE;
+            player->entity->coord.direction = -1;
             player->entity->anim = anim_retournement;
             player->entity->animStep = 0;
             player->entity->speedX += SHIP_ACCEL;
@@ -69,6 +70,7 @@ void playerMove() {
         if (player->entity->coord.direction == -1) {
             // EMU_printf("Go RIGHT");
             retournement = TRUE;
+            player->entity->coord.direction = 1;
             player->entity->anim = anim_retournement;
             player->entity->animStep = 0;
             player->entity->speedX -= SHIP_ACCEL;
@@ -88,7 +90,7 @@ void playerMove() {
 
     player->entity->coord.upscaledX += player->entity->speedX;
     player->entity->coord.upscaledY += player->entity->speedY;
-    updatePlayerPos(&scene, player->entity);
+    updatePlayerPos(&scene, player->entity, retournement);
     out = isOutOfScene(&scene, &player->entity->coord);
     if (out) {
         if (out & (OUT_LEFT|OUT_RIGHT)) {
@@ -109,7 +111,7 @@ void playerMove() {
             retournement = FALSE;
             player->entity->anim = anim_inclinaison;
             player->entity->animStep = 19;
-            player->entity->coord.direction *= -1;
+            // player->entity->coord.direction *= -1;
             player->entity->speedX = SHIP_ACCEL * player->entity->coord.direction;
         }
     } else {

@@ -33,7 +33,7 @@ void main(void)
     SCX_REG = 0; SCY_REG = 0;
     while(1) {
         playerMove();
-        // alienMoves(&scene, &(player->entity->coord));
+        alienMoves(&scene, &(player->entity->coord));
         updateView(&scene);
     }
 }

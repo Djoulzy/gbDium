@@ -200,15 +200,27 @@ int8_t isOutOfScene(Scene_t* scene, Coord_t* coord) {
     return out;
 }
 
-void updatePlayerPos(Scene_t* scene, Entity_t* entity) {
+void updatePlayerPos(Scene_t* scene, Entity_t* entity, uint8_t recadrage) {
+    int16_t gotoX = 0;
+
     entity->coord.X = entity->coord.upscaledX >> SCREEN_SCALE;
     entity->coord.Y = entity->coord.upscaledY >> SCREEN_SCALE;
 
     if (entity->coord.cameraStick) {
-        if ((entity->coord.X >= scene->startScrollZoneX) && (entity->coord.X <= scene->endScrollZoneX)) {
-            if (entity->coord.direction > 0) scene->camera_x = entity->coord.X - scene->startScrollZoneX;
-            else scene->camera_x = entity->coord.X - 160 + scene->startScrollZoneX;
+        if ((entity->coord.direction > 0) && (entity->coord.X >= scene->startScrollZoneX) && (entity->coord.X <= scene->endScrollZoneX)) {
+            gotoX = entity->coord.X - scene->startScrollZoneX;
             scene->redraw = TRUE;
+        } else if ((entity->coord.direction < 0) && (entity->coord.X >= 160 - scene->startScrollZoneX) && (entity->coord.X <= scene->sceneWidth - scene->startScrollZoneX)) {
+            gotoX = entity->coord.X - 160 + scene->startScrollZoneX;
+            scene->redraw = TRUE;
+        }
+
+        if (scene->redraw) {
+            if (recadrage) {
+                if (scene->camera_x <= gotoX - 3) scene->camera_x += 3;
+                else if (scene->camera_x >= gotoX + 3) scene->camera_x -= 3;
+            }
+            else scene->camera_x = gotoX;
         }
         
         if ((entity->coord.Y >= scene->startScrollZoneY) && (entity->coord.Y <= scene->endScrollZoneY)) {
