@@ -12,7 +12,7 @@
 #define OUT_DOWN    16
 
 typedef struct {
-    uint8_t cameraStick;
+    // uint8_t cameraStick;
     int16_t upscaledX, upscaledY;
     int16_t X, Y;
     int8_t direction;
@@ -74,7 +74,7 @@ extern void             prepareBulletList(Entity_t*, uint8_t, uint8_t);
 extern void             setupScene(Scene_t*, const uint8_t*, uint8_t, uint8_t);
 extern void             setCamera(Scene_t*);
 extern void             updateView(Scene_t*);
-extern void             setCameraStick(Entity_t*);
+// extern void             setCameraStick(Entity_t*);
 extern void             updatePlayerPos(Scene_t*, Entity_t*, uint8_t);
 extern void             updateMobPos(Scene_t*, Entity_t*);
 extern void             moveEntityBullets(Scene_t*, Entity_t*, EntityList_t*);

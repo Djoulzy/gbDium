@@ -6,7 +6,7 @@
 #define START_SCROLL_X          40 // 80
 #define START_SCROLL_Y          72
 #define SCREEN_SCALE            4
-#define SCENE_BORDER_SIZE       8
+#define SCENE_BORDER_SIZE       16
 #define SCROLL_STEPS            1
 
 #endif

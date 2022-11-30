@@ -19,7 +19,7 @@ void initPlayer() {
     set_sprite_data(0, 54, Ship);
 
     player = addEntityToList(player, ship_meta, START_SCROLL_X, START_SCROLL_Y);
-    setCameraStick(player->entity);
+    // setCameraStick(player->entity);
     player->entity->shootDelay = SHOOT_DELAY;
 
     prepareBulletList(player->entity, 52, MAX_SHOOT_NUM);
@@ -90,7 +90,7 @@ void playerMove() {
 
     player->entity->coord.upscaledX += player->entity->speedX;
     player->entity->coord.upscaledY += player->entity->speedY;
-    updatePlayerPos(&scene, player->entity, retournement);
+    // updatePlayerPos(&scene, player->entity, retournement);
     out = isOutOfScene(&scene, &player->entity->coord);
     if (out) {
         if (out & (OUT_LEFT|OUT_RIGHT)) {
@@ -98,8 +98,9 @@ void playerMove() {
             player->entity->anim = anim_retournement;
             player->entity->animStep = 0;
             player->entity->speedX = 0;
+            player->entity->coord.direction *= -1;
         } else player->entity->speedY = 0;
-    }
+    } else updatePlayerPos(&scene, player->entity, retournement);
 
     if (retournement) {
         if (player->entity->coord.direction >= 0)
@@ -111,7 +112,6 @@ void playerMove() {
             retournement = FALSE;
             player->entity->anim = anim_inclinaison;
             player->entity->animStep = 19;
-            // player->entity->coord.direction *= -1;
             player->entity->speedX = SHIP_ACCEL * player->entity->coord.direction;
         }
     } else {

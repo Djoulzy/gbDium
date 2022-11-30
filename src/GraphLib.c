@@ -14,7 +14,6 @@ Bullet_t* allocBullet(uint8_t tileNum) {
     // EMU_printf("new sprite: %d", shoot->spriteNum);
     spritesCount += 2;
     bullet->active = FALSE;
-    bullet->coord.cameraStick = FALSE;
     bullet->coord.overlapped = FALSE;
     set_sprite_tile(bullet->spriteNum, tileNum);
     return bullet;
@@ -158,9 +157,9 @@ void setupScene(Scene_t* tmp, const uint8_t* sceneData, uint8_t nb_tiles_w, uint
     tmp->endScrollZoneY = tmp->sceneHeight - START_SCROLL_Y;
 }
 
-void setCameraStick(Entity_t* entity) {
-    entity->coord.cameraStick = TRUE;
-}
+// void setCameraStick(Entity_t* entity) {
+//     entity->coord.cameraStick = TRUE;
+// }
 
 uint8_t isVisible(Coord_t* coord) {
     if ((coord->viewportX) && (coord->viewportX<=176) && (coord->viewportY) && (coord->viewportY<=160))
@@ -174,26 +173,26 @@ int8_t isOutOfScene(Scene_t* scene, Coord_t* coord) {
     if (coord->X > scene->sceneWidth - SCENE_BORDER_SIZE)  {
         coord->X = scene->sceneWidth - SCENE_BORDER_SIZE;
         coord->upscaledX = coord->X << SCREEN_SCALE;
-        if (coord->cameraStick) scene->camera_x = scene->camera_max_x;
+        // if (coord->cameraStick) scene->camera_x = scene->camera_max_x;
         out |= OUT_RIGHT;
     }
     else if (coord->X < SCENE_BORDER_SIZE)  {
         coord->X = SCENE_BORDER_SIZE;
         coord->upscaledX = coord->X << SCREEN_SCALE;
-        if (coord->cameraStick) scene->camera_x = 0;
+        // if (coord->cameraStick) scene->camera_x = 0;
         out |= OUT_LEFT;
     }
 
     if (coord->Y > scene->sceneHeight - SCENE_BORDER_SIZE) {
         coord->Y = scene->sceneHeight - SCENE_BORDER_SIZE;
         coord->upscaledY = coord->Y << SCREEN_SCALE;
-        if (coord->cameraStick) scene->camera_y = scene->camera_max_y;
+        // if (coord->cameraStick) scene->camera_y = scene->camera_max_y;
         out |= OUT_DOWN;
     }
     else if (coord->Y < SCENE_BORDER_SIZE) {
         coord->Y = SCENE_BORDER_SIZE ;
         coord->upscaledY = coord->Y << SCREEN_SCALE;
-        if (coord->cameraStick) scene->camera_y = 0;
+        // if (coord->cameraStick) scene->camera_y = 0;
         out |= OUT_UP;
     }
 
@@ -206,27 +205,25 @@ void updatePlayerPos(Scene_t* scene, Entity_t* entity, uint8_t recadrage) {
     entity->coord.X = entity->coord.upscaledX >> SCREEN_SCALE;
     entity->coord.Y = entity->coord.upscaledY >> SCREEN_SCALE;
 
-    if (entity->coord.cameraStick) {
-        if ((entity->coord.direction > 0) && (entity->coord.X >= scene->startScrollZoneX) && (entity->coord.X <= scene->endScrollZoneX)) {
-            gotoX = entity->coord.X - scene->startScrollZoneX;
-            scene->redraw = TRUE;
-        } else if ((entity->coord.direction < 0) && (entity->coord.X >= 160 - scene->startScrollZoneX) && (entity->coord.X <= scene->sceneWidth - scene->startScrollZoneX)) {
-            gotoX = entity->coord.X - 160 + scene->startScrollZoneX;
-            scene->redraw = TRUE;
-        }
+    if ((entity->coord.direction > 0) && (entity->coord.X >= scene->startScrollZoneX) && (entity->coord.X <= scene->endScrollZoneX)) {
+        gotoX = entity->coord.X - scene->startScrollZoneX;
+        scene->redraw = TRUE;
+    } else if ((entity->coord.direction < 0) && (entity->coord.X >= 160 - scene->startScrollZoneX) && (entity->coord.X <= scene->sceneWidth - scene->startScrollZoneX)) {
+        gotoX = entity->coord.X - 160 + scene->startScrollZoneX;
+        scene->redraw = TRUE;
+    }
 
-        if (scene->redraw) {
-            if (recadrage) {
-                if (scene->camera_x <= gotoX - 3) scene->camera_x += 3;
-                else if (scene->camera_x >= gotoX + 3) scene->camera_x -= 3;
-            }
-            else scene->camera_x = gotoX;
+    if (scene->redraw) {
+        if (recadrage) {
+            if (scene->camera_x <= gotoX - 3) scene->camera_x += 3;
+            else if (scene->camera_x >= gotoX + 3) scene->camera_x -= 3;
         }
-        
-        if ((entity->coord.Y >= scene->startScrollZoneY) && (entity->coord.Y <= scene->endScrollZoneY)) {
-            scene->camera_y = entity->coord.Y - scene->startScrollZoneY;
-            scene->redraw = TRUE;
-        }
+        else scene->camera_x = gotoX;
+    }
+    
+    if ((entity->coord.Y >= scene->startScrollZoneY) && (entity->coord.Y <= scene->endScrollZoneY)) {
+        scene->camera_y = entity->coord.Y - scene->startScrollZoneY;
+        scene->redraw = TRUE;
     }
 
     entity->coord.viewportX = entity->coord.X - scene->camera_x;
@@ -290,7 +287,7 @@ void dumpEntity(Entity_t* entity) {
     EMU_printf("Active: %d", entity->active);
     EMU_printf("Scene Coord: %d x %d", entity->coord.X, entity->coord.Y);
     EMU_printf("ViewPort Coord: %d x %d", entity->coord.viewportX, entity->coord.viewportY);
-    EMU_printf("Camera follow: %d", entity->coord.cameraStick);
+    // EMU_printf("Camera follow: %d", entity->coord.cameraStick);
     while(p != NULL) {
         EMU_printf("  - Bullets %d: Active: %d Coord: (%d x %d)(%d x %d)", p->entity->spriteNum, p->entity->active, p->entity->coord.X, p->entity->coord.Y, p->entity->coord.viewportX, p->entity->coord.viewportY);
         p = p->suiv;
