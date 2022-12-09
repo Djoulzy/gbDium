@@ -64,8 +64,6 @@ typedef struct {
     uint8_t map_pos_x, map_pos_y;
     uint8_t old_map_pos_x, old_map_pos_y;
     uint8_t redraw;
-    uint16_t startScrollZoneX, startScrollZoneY;
-    uint16_t endScrollZoneX, endScrollZoneY;
     uint16_t sceneWidth, sceneHeight;
 } Scene_t;
 

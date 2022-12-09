@@ -151,10 +151,6 @@ void setupScene(Scene_t* tmp, const uint8_t* sceneData, uint8_t nb_tiles_w, uint
 
     tmp->sceneWidth = nb_tiles_w << 3;
     tmp->sceneHeight = nb_tiles_h << 3;
-    tmp->startScrollZoneX = START_SCROLL_X;
-    tmp->startScrollZoneY = START_SCROLL_Y;
-    tmp->endScrollZoneX = tmp->sceneWidth - 160 + START_SCROLL_X;
-    tmp->endScrollZoneY = tmp->sceneHeight - START_SCROLL_Y;
 }
 
 // void setCameraStick(Entity_t* entity) {
@@ -200,29 +196,61 @@ int8_t isOutOfScene(Scene_t* scene, Coord_t* coord) {
 }
 
 void updatePlayerPos(Scene_t* scene, Entity_t* entity, uint8_t recadrage) {
-    int16_t gotoX = 0;
+    int16_t gotoX = 0, step = 3;
 
     entity->coord.X = entity->coord.upscaledX >> SCREEN_SCALE;
     entity->coord.Y = entity->coord.upscaledY >> SCREEN_SCALE;
 
-    if ((entity->coord.direction > 0) && (entity->coord.X >= scene->startScrollZoneX) && (entity->coord.X <= scene->endScrollZoneX)) {
-        gotoX = entity->coord.X - scene->startScrollZoneX;
-        scene->redraw = TRUE;
-    } else if ((entity->coord.direction < 0) && (entity->coord.X >= 160 - scene->startScrollZoneX) && (entity->coord.X <= scene->sceneWidth - scene->startScrollZoneX)) {
-        gotoX = entity->coord.X - 160 + scene->startScrollZoneX;
-        scene->redraw = TRUE;
+    // Cas 1
+    if (entity->coord.X <= START_SCROLL_X) {
+        scene->camera_x = 0;
+        scene->redraw = FALSE;
+    } else if  (entity->coord.X >= scene->sceneWidth - START_SCROLL_X) {
+        scene->camera_x = scene->sceneWidth - 160;
+        scene->redraw = FALSE;
+    } else
+    // Cas 3
+    if ((entity->coord.X >= SCROLL_ZONE_START) && (entity->coord.X <= scene->sceneWidth + SCROLL_ZONE_END)) {
+        if (entity->coord.direction > 0) {
+            gotoX = entity->coord.X - START_SCROLL_X;
+            scene->redraw = TRUE;
+        } else {
+            gotoX = entity->coord.X + SCROLL_ZONE_END;
+            scene->redraw = TRUE;
+        }
+    } else
+    // Cas 2
+    if (entity->coord.X < SCROLL_ZONE_START) {
+        if (entity->coord.direction > 0) {
+            gotoX = entity->coord.X - START_SCROLL_X;
+            scene->redraw = TRUE;
+        } else {
+            gotoX = 0;
+            scene->redraw = TRUE;
+        }
+    }
+    else {
+        if (entity->coord.direction > 0) {
+            gotoX = scene->sceneWidth - 160;
+            scene->redraw = TRUE;
+        } else {
+            gotoX = entity->coord.X + SCROLL_ZONE_END;
+            scene->redraw = TRUE;
+        }
     }
 
     if (scene->redraw) {
         if (recadrage) {
-            if (scene->camera_x <= gotoX - 3) scene->camera_x += 3;
-            else if (scene->camera_x >= gotoX + 3) scene->camera_x -= 3;
+            if ((int16_t)(scene->camera_x) < gotoX - step) scene->camera_x += step;
+            else if (scene->camera_x > gotoX + step) scene->camera_x -= step;
+            else scene->camera_x = gotoX;
         }
-        else scene->camera_x = gotoX;
+        else
+        scene->camera_x = gotoX;
     }
     
-    if ((entity->coord.Y >= scene->startScrollZoneY) && (entity->coord.Y <= scene->endScrollZoneY)) {
-        scene->camera_y = entity->coord.Y - scene->startScrollZoneY;
+    if ((entity->coord.Y >= START_SCROLL_Y) && (entity->coord.Y <= scene->sceneHeight - START_SCROLL_Y)) {
+        scene->camera_y = entity->coord.Y - START_SCROLL_Y;
         scene->redraw = TRUE;
     }
 
