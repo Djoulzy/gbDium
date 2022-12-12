@@ -74,15 +74,16 @@ void init_gfx() {
 void main(void)
 {
     titleScreen();
-    // wait_vbl_done();
-    // mode(M_TEXT_OUT);
+
     // By default,
     // the background and window TDT is located at addresses 0x8800-0x97FF,
     // the sprite TDT at addresses 0x8000-0x8FFF,
     // the BTM at addresses 0x9800-0x9BFF,
     // and the WTM at addresses 0x9C00-0x9FFF
-// add_LCD(LCDCF_BG8800);
-// add_LCD(LCDCF_BG9800);
+
+    wait_vbl_done();
+LCDC_REG = LCDCF_BG8800;
+LCDC_REG = LCDCF_BG9800;
 
 	init_gfx();
     // gprintf("%x", get_mode());
