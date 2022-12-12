@@ -8,6 +8,8 @@
 GBDK_HOME = ${GBDKDIR}
 
 LCC = $(GBDK_HOME)bin/lcc
+PNG2ASSET = $(GBDK_HOME)bin/png2asset
+
 # RUNNER = $(GBDK_HOME)bin/visualboyadvance-m.app/Contents/MacOS/visualboyadvance-m
 # RUNNER = $(GBDK_HOME)bin/SameBoy.app/Contents/MacOS/SameBoy
 # RUNNER = $(GBDK_HOME)bin/mGBA.app/Contents/MacOS/mGBA
@@ -17,7 +19,7 @@ RUNNER = $(GBDK_HOME)Emulicious/Emulicious.jar -scale 4
 
 # You can set flags for LCC here
 # For example, you can uncomment the line below to turn on debug output
-LCCFLAGS = -debug
+LCCFLAGS = -debug -Wl-m -Wm-yt0x1A -Wm-yo2
 
 # You can set the name of the .gb ROM file here
 PROJECTNAME    = gbDium
@@ -67,8 +69,13 @@ sprite:
 map:
 	wine64 $(GBDK_HOME)gbmb18/GBMB.EXE
 
+image:
+	$(PNG2ASSET) assets/title.png -keep_duplicate_tiles -map -tiles_only -bpp 2
+
 clean:
 #	rm -f  *.gb *.ihx *.cdb *.adb *.noi *.map
 	rm -f  $(OBJDIR)/*.*
 	rm -f *.gb *.ihx 
 
+usage:
+	$(GBDK_HOME)/bin/romusage $(PROJECTNAME).noi -sRe -sRp -g

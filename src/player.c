@@ -7,7 +7,7 @@
 #include "../res/setSprites.h"
 
 EntityList_t* player;
-joypads_t joypads;
+extern joypads_t joypads;
 BulletList_t* ship_shoot;
 extern Scene_t scene;
 
