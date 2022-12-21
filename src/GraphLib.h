@@ -67,6 +67,7 @@ typedef struct {
     uint16_t sceneWidth, sceneHeight;
 } Scene_t;
 
+extern void             clearScreen(uint8_t);
 extern EntityList_t*    addEntityToList(EntityList_t*, const metasprite_t**, int16_t, int16_t);
 extern void             prepareBulletList(Entity_t*, uint8_t, uint8_t);
 extern void             setupScene(Scene_t*, const uint8_t*, uint8_t, uint8_t);

@@ -7,6 +7,11 @@ uint8_t spritesCount = 0;
 
 Entity_t LAST_ENTITY = { .active = 255 };
 
+void clearScreen(uint8_t tile) {
+    for (uint8_t y = 0; y<18; y++)
+        for (uint8_t x = 0; x<20; x++) set_bkg_tile_xy(x, y, tile);
+}
+
 Bullet_t* allocBullet(uint8_t tileNum) {
     Bullet_t* bullet = malloc(sizeof(Bullet_t));
 

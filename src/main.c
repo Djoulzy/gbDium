@@ -6,10 +6,9 @@
 #include "GraphLib.h"
 #include "player.h"
 #include "mobs.h"
+#include "boss.h"
 
 #include "../res/title.h"
-#include "../res/boss.h"
-
 #include "../res/scene_tiles.h"
 #include "../res/scene1.h"
 
@@ -33,9 +32,9 @@ void titleScreen(void)
 
     BGP_REG = DMG_PALETTE(DMG_WHITE, DMG_LITE_GRAY, DMG_DARK_GRAY, DMG_BLACK);
      // Load up the tile data
-     set_bkg_data(0, title_TILE_COUNT, boss_tiles);
+     set_bkg_data(0, title_TILE_COUNT, title_tiles);
      // Set screen x,y pos to 0,0 and draw the map 20,18(size of the screen)
-     set_bkg_tiles(0, 0, 20, 18, boss_map);
+     set_bkg_tiles(title_TILE_ORIGIN, title_TILE_ORIGIN, title_WIDTH >> 3, title_HEIGHT >> 3, title_map);
     SHOW_BKG;
 
     // Loop forever
@@ -51,7 +50,7 @@ void titleScreen(void)
     }
 }
 
-void init_gfx() {
+void setupScene1() {
 	SPRITES_8x16;
 	HIDE_SPRITES;
 	HIDE_BKG;
@@ -68,12 +67,16 @@ void init_gfx() {
 	DISPLAY_ON;
 }
 
-void none() {
+void setupScene2() {
+    HIDE_BKG;
+    initBoss();
 }
 
 void main(void)
 {
     titleScreen();
+    bossTest();
+
     // DISPLAY_OFF;
 
     // STAT_REG = 0x45;
@@ -85,7 +88,9 @@ void main(void)
     // set_interrupts(VBL_IFLAG | LCD_IFLAG);
 
     // LCDC_REG = LCDCF_BG9800 | LCDCF_WIN9C00;
-	init_gfx();
+    clearScreen(0);
+	setupScene2();
+    bossTest();
 
     // gprintf("%x", get_mode());
 
