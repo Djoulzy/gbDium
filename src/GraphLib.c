@@ -3,6 +3,37 @@
 #include <gbdk/emu_debug.h>
 #include "GraphLib.h"
 
+
+/// @brief FROM GBDK Forum
+
+inline void imove_sprite(UINT8 nb, UINT8 x, UINT8 y) {
+    OAM_item_t * itm = &shadow_OAM[nb];
+    itm->y=y, itm->x=x; 
+}
+
+inline void iscroll_sprite(UINT8 nb, INT8 x, INT8 y) {
+    OAM_item_t * itm = &shadow_OAM[nb];
+    itm->y+=y, itm->x+=x; 
+}
+
+inline void iset_sprite_tile(UINT8 nb, UINT8 tile) {
+    shadow_OAM[nb].tile=tile; 
+}
+
+inline UINT8 iget_sprite_tile(UINT8 nb) {
+    return shadow_OAM[nb].tile;
+}
+
+inline void iset_sprite_prop(UINT8 nb, UINT8 prop){
+    shadow_OAM[nb].prop=prop;
+}
+
+inline UINT8 iget_sprite_prop(UINT8 nb){
+    return shadow_OAM[nb].prop;
+}
+
+//////////////////////////////////
+
 uint8_t spritesCount = 0;
 
 Entity_t LAST_ENTITY = { .active = 255 };
@@ -127,7 +158,7 @@ void moveEntityBullets(Scene_t* scene, Entity_t* entity, EntityList_t* target) {
             }
 
             if (!collision && isVisible(&(p->entity->coord))) {
-                move_sprite(p->entity->spriteNum, p->entity->coord.viewportX, p->entity->coord.viewportY);
+                imove_sprite(p->entity->spriteNum, p->entity->coord.viewportX, p->entity->coord.viewportY);
             } else {
                 p->entity->active = FALSE;
                 entity->availableBullet = p;
@@ -200,7 +231,30 @@ int8_t isOutOfScene(Scene_t* scene, Coord_t* coord) {
     return out;
 }
 
-void updatePlayerPos(Scene_t* scene, Entity_t* entity, uint8_t recadrage) {
+void updatePlayerPosStrict(Entity_t* entity) {
+    int16_t gotoX = 0, step = 3;
+
+    entity->coord.X = entity->coord.viewportX = entity->coord.upscaledX >> SCREEN_SCALE;
+    entity->coord.Y = entity->coord.viewportY = entity->coord.upscaledY >> SCREEN_SCALE;
+
+    if (entity->coord.viewportX <= 0) {
+        entity->coord.viewportX = 0;
+        entity->speedX = 0;
+    } else if  (entity->coord.viewportX >= VIEWPORT_WIDTH) {
+        entity->coord.viewportX = VIEWPORT_WIDTH;
+        entity->speedX = 0;
+    }
+
+    if (entity->coord.viewportY <= 16) {
+        entity->coord.viewportY = 16;
+        entity->speedY = 0;
+    } else if  (entity->coord.viewportY >= VIEWPORT_HEIGHT) {
+        entity->coord.viewportY = VIEWPORT_HEIGHT;
+        entity->speedY = 0;
+    }
+}
+
+void updatePlayerPosFree(Scene_t* scene, Entity_t* entity, uint8_t recadrage) {
     int16_t gotoX = 0, step = 3;
 
     entity->coord.X = entity->coord.upscaledX >> SCREEN_SCALE;

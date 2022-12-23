@@ -13,6 +13,7 @@
 extern EntityList_t* player;
 
 extern void initPlayer(void);
-extern void playerMove(void);
+extern void playerMoveFree(void);
+extern void playerMoveStrict(void);
 
 #endif

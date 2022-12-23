@@ -30,7 +30,7 @@ void initPlayer() {
     player->entity->anim = anim_inclinaison;
 }
 
-void playerMove() {
+void playerMoveFree() {
 
     joypad_ex(&joypads);
     if (joypads.joy0 & J_SELECT) {
@@ -100,7 +100,7 @@ void playerMove() {
             player->entity->speedX = 0;
             player->entity->coord.direction *= -1;
         } else player->entity->speedY = 0;
-    } else updatePlayerPos(&scene, player->entity, retournement);
+    } else updatePlayerPosFree(&scene, player->entity, retournement);
 
     if (retournement) {
         if (player->entity->coord.direction >= 0)
@@ -127,6 +127,54 @@ void playerMove() {
                 move_metasprite_vflip(ship_meta[player->entity->anim[abs(player->entity->animStep)]], 0, player->entity->spriteNum, player->entity->coord.viewportX, player->entity->coord.viewportY);
             else move_metasprite_hvflip(ship_meta[player->entity->anim[abs(player->entity->animStep)]], 0, player->entity->spriteNum, player->entity->coord.viewportX, player->entity->coord.viewportY+16);
         }
+    }
+
+    moveEntityBullets(&scene, player->entity, alienList);
+}
+
+void playerMoveStrict() {
+    joypad_ex(&joypads);
+    if (joypads.joy0 & J_SELECT) {
+        player->entity->speedX = player->entity->speedY = 0;
+    }
+
+    if (joypads.joy0 & J_UP) {
+        player->entity->anim = anim_inclinaison;
+        player->entity->speedY -= SHIP_ACCEL;
+        if (player->entity->speedY < - MAX_SHIP_SPEED) player->entity->speedY = - MAX_SHIP_SPEED;
+        player->entity->animStep++;
+        if (player->entity->animStep > 19) player->entity->animStep = 19;
+    } else if (joypads.joy0 & J_DOWN) {
+        player->entity->anim = anim_inclinaison;
+        player->entity->speedY += SHIP_ACCEL;
+        if (player->entity->speedY > MAX_SHIP_SPEED) player->entity->speedY = MAX_SHIP_SPEED;
+        player->entity->animStep--;
+        if (player->entity->animStep < -19) player->entity->animStep = -19;
+    } else if (player->entity->animStep != 0) {
+        if (player->entity->animStep > 0) player->entity->animStep--;
+        else player->entity->animStep++;
+    }
+
+    if (joypads.joy0 & J_LEFT) {
+        player->entity->speedX -= SHIP_ACCEL;
+        if (player->entity->speedX < - MAX_SHIP_SPEED) player->entity->speedX = - MAX_SHIP_SPEED;
+    } else if (joypads.joy0 & J_RIGHT) {
+        player->entity->speedX += SHIP_ACCEL;
+        if (player->entity->speedX > MAX_SHIP_SPEED) player->entity->speedX = MAX_SHIP_SPEED;
+    }
+
+    if (joypads.joy0 & J_A) {
+        if (shootOk(player->entity)) entityShoot(player->entity, player->entity->coord.direction * SHOOT_SPEED, 0, 0);
+    }
+
+    player->entity->coord.upscaledX += player->entity->speedX;
+    player->entity->coord.upscaledY += player->entity->speedY;
+    updatePlayerPosStrict(player->entity);
+
+    if (player->entity->animStep >= 0)
+        move_metasprite(ship_meta[player->entity->anim[abs(player->entity->animStep)]], 0, player->entity->spriteNum, player->entity->coord.viewportX, player->entity->coord.viewportY);
+    else {
+        move_metasprite_hflip(ship_meta[player->entity->anim[abs(player->entity->animStep)]], 0, player->entity->spriteNum, player->entity->coord.viewportX, player->entity->coord.viewportY+16);
     }
 
     moveEntityBullets(&scene, player->entity, alienList);
