@@ -71,6 +71,7 @@ map:
 
 image:
 	$(PNG2ASSET) assets/title.png -keep_duplicate_tiles -map -tiles_only -bpp 2
+	$(PNG2ASSET) assets/bigShip.png -keep_duplicate_tiles -map -bpp 2
 
 clean:
 #	rm -f  *.gb *.ihx *.cdb *.adb *.noi *.map
