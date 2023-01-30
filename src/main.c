@@ -140,6 +140,6 @@ void main(void)
         playerMoveStrict();
         bossMove();
         // alienMoves(&scene, &(player->entity->coord));
-        updateView(&scene);
+        // updateView(&scene);
     }
 }

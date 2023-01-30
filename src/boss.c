@@ -22,6 +22,7 @@ const metasprite_t* const shipgunFrames[1] = {
 uint8_t bossX, bossY;
 int8_t bossSpeedX, bossSpeedY;
 int8_t tempo;
+EntityList_t *p;
 
 void initBoss() {
     int8_t i;
@@ -37,35 +38,49 @@ void initBoss() {
     set_sprite_data(54, 4, ShipGun);
 
     for (i = 0; i<NB_SHIPGUN; i++) {
-        shipgunList = addEntityToList(shipgunList, shipgunFrames, 10, 10);
+        shipgunList = addEntityToList(shipgunList, shipgunFrames, bossX, bossY);
         shipgunList->entity->shootDelay = 1;
         prepareBulletList(shipgunList->entity, 70, 1);
     }
+
+    p = shipgunList;
+    p->entity->coord.X += (7 << 3);
+    p->entity->coord.Y += (4 << 3);
+    p = p->suiv;
+    p->entity->coord.X += (4 << 3);
+    p->entity->coord.Y += (7 << 3);
+    p = p->suiv;
+    p->entity->coord.X += (7 << 3);
+    p->entity->coord.Y += (10 << 3);
 }
 
 void bossMove() {
-    EntityList_t *p = shipgunList;
     tempo--;
 
-    if (tempo <= 0) { 
+    if (tempo <= 0) {
+
         bossX += bossSpeedX;
         bossY += bossSpeedY;
-        scroll_bkg(-bossSpeedX, -bossSpeedY);
-
-        if (bossX < 80) bossSpeedX = 1;
+    
+            if (bossX < 80) bossSpeedX = 1;
         else if (bossX > 96) bossSpeedX = -1;
 
         if (bossY < 1) bossSpeedY = 1;
         else if (bossY > 44) bossSpeedY = -1;
-        tempo = 3;
-    }
 
-    while(p != NULL) {
-        if (p->entity->active) {
-            updateMobPos(&scene, p->entity);
-            if (isVisible(&(p->entity->coord)))
-                move_metasprite(shipgunFrames[0], 0, p->entity->spriteNum, p->entity->coord.viewportX, p->entity->coord.viewportY);
+        p = shipgunList;
+        while(p != NULL) {
+            if (p->entity->active) {
+                p->entity->coord.X += bossSpeedX;
+                p->entity->coord.Y += bossSpeedY;
+                move_metasprite(shipgunFrames[0], 0, p->entity->spriteNum, p->entity->coord.X, p->entity->coord.Y);
+            }
+            p = p->suiv;
         }
-        p = p->suiv;
+        tempo = 3;
+        wait_vbl_done();
+        scroll_bkg(-bossSpeedX, -bossSpeedY);
+    } else {
+        wait_vbl_done();
     }
 }
