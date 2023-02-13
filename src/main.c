@@ -138,7 +138,7 @@ void main(void)
     while (1)
     {
         playerMoveStrict();
-        bossMove();
+        bossMove(&scene, &(player->entity->coord));
         // alienMoves(&scene, &(player->entity->coord));
         // updateView(&scene);
     }

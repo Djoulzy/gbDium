@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <rand.h>
 #include "GraphLib.h"
+#include "player.h"
 #include "boss.h"
 
 #include "../res/bigShip.h"
@@ -35,12 +36,12 @@ void initBoss() {
     bossSpeedY = 1;
     tempo = 3;
 
-    set_sprite_data(54, 4, ShipGun);
+    set_sprite_data(54, 6, ShipGun);
 
     for (i = 0; i<NB_SHIPGUN; i++) {
         shipgunList = addEntityToList(shipgunList, shipgunFrames, bossX, bossY);
         shipgunList->entity->shootDelay = 1;
-        prepareBulletList(shipgunList->entity, 70, 1);
+        prepareBulletList(shipgunList->entity, 58, 1);
     }
 
     p = shipgunList;
@@ -54,7 +55,17 @@ void initBoss() {
     p->entity->coord.Y += (10 << 3);
 }
 
-void bossMove() {
+void bossShoot(Entity_t* entity, Coord_t* playerCoord) {
+    int8_t spdx = 0, spdy = 0;
+
+    // if (playerCoord->X > entity->coord.X) spdx = ALIEN_SHOOT_SPEED;
+    // else if (playerCoord->X < entity->coord.X) spdx = -ALIEN_SHOOT_SPEED;
+    // if (playerCoord->Y > entity->coord.Y) spdy = ALIEN_SHOOT_SPEED;
+    // else if (playerCoord->Y < entity->coord.Y) spdy = -ALIEN_SHOOT_SPEED;
+    entityShoot(entity, -2, 0, 0);
+}
+
+void bossMove(Scene_t* scene, Coord_t* playerCoord) {
     tempo--;
 
     if (tempo <= 0) {
@@ -73,8 +84,10 @@ void bossMove() {
             if (p->entity->active) {
                 p->entity->coord.X += bossSpeedX;
                 p->entity->coord.Y += bossSpeedY;
+                if (shootOk(p->entity)) bossShoot(p->entity, playerCoord);
                 move_metasprite(shipgunFrames[0], 0, p->entity->spriteNum, p->entity->coord.X, p->entity->coord.Y);
             }
+            moveEntityBullets(scene, p->entity, player);
             p = p->suiv;
         }
         tempo = 3;
