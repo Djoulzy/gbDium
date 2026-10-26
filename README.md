@@ -5,9 +5,9 @@ Prototype de jeu **Game Boy**, écrit en C avec **GBDK-2020**, inspiré du shoot
 
 ## État du jeu
 
-Le prototype propose les deux scènes récupérées lors de la fusion de `develop` : un combat contre un grand vaisseau à trois tourelles, et un mode de vol libre avec caméra, retournements et cinq ennemis qui poursuivent le joueur. Le joueur conserve l'accélération, l'inertie et ses animations dans les deux modes.
+La partie enchaîne les deux niveaux récupérés dans `develop` : d'abord le vol libre avec caméra, retournements et cinq ennemis qui poursuivent le joueur, puis le combat contre un grand vaisseau à trois tourelles. Le passage au boss est automatique une fois les cinq ennemis détruits et la dernière animation d'explosion terminée. Le joueur conserve l'accélération, l'inertie et ses animations dans les deux niveaux.
 
-L'écran titre original « GB-DIUM » apparaît au démarrage. Appuyer sur **Start** pour lancer le combat contre le boss, comme dans la dernière version de `develop`. Maintenir **Select** en appuyant sur **Start** pour jouer en vol libre. L'image source est conservée dans `assets/title.png` et son export en tuiles dans `res/title.c` / `res/title.h`.
+L'écran titre original « GB-DIUM » apparaît au démarrage. Appuyer sur **Start** pour commencer le premier niveau. Lors du passage au boss, le joueur reprend sa position de départ, tourné vers la droite, avec des vitesses nulles ; la caméra, les tirs et les sprites de l'ancien niveau sont réinitialisés. L'image source du titre est conservée dans `assets/title.png` et son export en tuiles dans `res/title.c` / `res/title.h`.
 
 La scène de vol libre mesure **128 × 32 tuiles**, soit **1 024 × 256 pixels**, pour un écran de **160 × 144 pixels**. Face au boss, le joueur reste dans l'écran et tire vers la droite ; le décor du boss se déplace indépendamment, avec ses trois tourelles alignées et leurs tirs vers la gauche. Les tourelles touchées explosent. Il n'y a pas encore de score, de gestion des vies, de fin de partie ou de son. Les collisions des tirs ennemis avec le joueur sont détectées, mais ne déclenchent pas encore sa destruction.
 
@@ -87,8 +87,7 @@ La configuration de débogage Emulicious de `develop` est également conservée 
 
 | Bouton Game Boy | Action |
 | --- | --- |
-| Start, à l'écran titre | Démarrer le combat contre le boss. |
-| Select + Start, à l'écran titre | Démarrer le vol libre. |
+| Start, à l'écran titre | Démarrer le niveau contre les ennemis ; le boss suit automatiquement. |
 | Croix directionnelle | Accélérer dans la direction choisie ; en vol libre, gauche/droite déclenchent aussi le retournement et le recadrage de la caméra. |
 | A | Tirer, sauf pendant le retournement ; trois projectiles simultanés maximum, comme dans `develop`. |
 | Select | Remettre les vitesses à zéro ; relâcher les directions pour arrêter le vaisseau. |
@@ -97,11 +96,11 @@ Le clavier correspondant dépend de la configuration de SameBoy. Pendant la part
 
 Après `make test`, vérifier manuellement :
 
-1. L'affichage de l'écran titre, puis le démarrage du combat contre le boss avec Start.
-2. Les limites de déplacement du joueur à l'écran, l'arrivée du boss, le suivi de ses trois tourelles et leurs tirs.
-3. Les tirs maintenus avec A, les explosions et la disparition des tourelles touchées.
-4. Après réinitialisation, le vol libre avec Select + Start : inertie, retournement, recadrage, décor et ennemis.
-5. L'arrêt avec Select, les limites de la carte et une nouvelle session après réinitialisation.
+1. L'affichage de l'écran titre, puis le démarrage du niveau contre les ennemis avec Start.
+2. Le vol libre : inertie, retournement, recadrage, décor, ennemis et arrêt avec Select.
+3. La destruction des cinq ennemis, puis le passage automatique au boss après la dernière explosion.
+4. La disparition des anciens tirs et sprites, la remise en place du joueur et l'arrivée du boss avec ses trois tourelles.
+5. Les limites de déplacement à l'écran, les tirs, les explosions des tourelles et une nouvelle partie après réinitialisation.
 
 Pour déboguer, activer le mode développeur dans SameBoy et ouvrir sa console. Les commandes du débogueur sont décrites dans la [documentation officielle](https://sameboy.github.io/debugger/).
 
@@ -110,6 +109,8 @@ Pour déboguer, activer le mode développeur dans SameBoy et ouvrir sa console. 
 `make check` compile la ROM et exécute les tests du véritable code de jeu avec une simulation de la tilemap et de la mémoire OAM. Ils couvrent les collisions simultanées, les boîtes de collision, l'épuisement et la réutilisation des tirs, le masquage hors écran, les limites de déplacement, les retournements et les explosions. Le décor visible est comparé à la carte source pendant un parcours complet aller-retour et pendant **4 096 frames de vol libre**. **4 096 frames de combat contre le boss** vérifient aussi ses déplacements, l'alignement des tourelles et les limites du joueur. Les tests contrôlent la cadence des tirs du boss, les impacts et la destruction des tourelles. Le défilement en vol libre reste limité à deux transferts et 40 tuiles par frame, après `vsync()` ; le décor du boss est chargé une fois, puis déplacé par les registres de défilement.
 
 Le contrôle de cartouche vérifie ensuite la taille de **32 Kio**, le logo Nintendo, le titre `GBDIUM`, la compatibilité DMG, le type **ROM ONLY** sans RAM cartouche, ainsi que les checksums de l'en-tête et du fichier complet. Python n'utilise aucune dépendance externe.
+
+Un test de progression exécute aussi la véritable boucle de jeu : il garde le dernier ennemi hors écran, le détruit avec un projectile, attend la fin de son explosion et vérifie le passage unique au boss. Il contrôle le nettoyage des tirs, des OAM logiciel et matériel, de la caméra et de l'état du joueur, puis le démarrage d'une nouvelle partie.
 
 Le workflow [`.github/workflows/build.yml`](.github/workflows/build.yml) exécute l'installation, la compilation, les tests de logique et ces contrôles sur **Ubuntu 24.04 et macOS 15**, à chaque push, pull request ou lancement manuel. La ROM, la carte mémoire et les symboles sont disponibles comme artefacts dans GitHub Actions après une exécution réussie.
 
@@ -125,7 +126,8 @@ make check-logic HOST_CFLAGS='-O1 -g -std=c11 -Wall -Wextra -Werror -fsanitize=a
 
 | Chemin | Rôle |
 | --- | --- |
-| `src/main.c` | Initialisation graphique et boucle principale. |
+| `src/main.c` | Écran titre et démarrage du jeu. |
+| `src/game.c`, `src/game.h` | Boucle de jeu, initialisation des niveaux et passage des ennemis au boss. |
 | `src/player.c`, `src/player.h` | Commandes, déplacement, animations et tirs du joueur. |
 | `src/mobs.c`, `src/mobs.h` | Ennemis, poursuite, tirs et explosions. |
 | `src/boss.c`, `src/boss.h` | Entrée et déplacement du boss, tourelles et tirs. |
@@ -161,7 +163,7 @@ Mesures avec GBDK 4.5.0 et les options du Makefile, avant/après la passe d'opti
 | Réserve du tas d'allocation | 2 048 octets | 0 octet |
 | ROM occupée, selon `romusage` | 15 648 octets | 11 680 octets |
 
-Après restauration du titre et intégration des deux modes de `develop`, l'occupation est de **232 octets de RAM statique** et **18 764 octets de ROM**, sans tas d'allocation. Le fichier de cartouche reste à 32 Kio.
+Après restauration du titre, intégration des deux niveaux de `develop` et ajout de leur enchaînement, la RAM statique reste à **232 octets**, sans tas d'allocation. Le fichier de cartouche reste à 32 Kio.
 
 Le fichier de cartouche conserve sa taille de 32 Kio. Pour consulter l'occupation actuelle après compilation :
 
@@ -169,7 +171,7 @@ Le fichier de cartouche conserve sa taille de 32 Kio. Pour consulter l'occupatio
 .tools/gbdk/bin/romusage gbDium.noi -g
 ```
 
-Ces mesures quantifient la mémoire libérée. Un profilage dans l'émulateur reste nécessaire pour chiffrer le temps CPU par frame. La destruction du joueur, les vies, le score, le son et la progression restent à implémenter.
+Ces mesures quantifient la mémoire libérée. Un profilage dans l'émulateur reste nécessaire pour chiffrer le temps CPU par frame. La destruction du joueur, les vies, le score, le son et la fin de partie après le boss restent à implémenter.
 
 ## Références
 

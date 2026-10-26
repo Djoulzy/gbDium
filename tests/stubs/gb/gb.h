@@ -13,12 +13,21 @@
 #define S_FLIPX 0x20u
 #define S_FLIPY 0x40u
 #define BANKREF_EXTERN(name)
+#define LCDCF_ON 0x80u
+#define DISPLAY_OFF (LCDC_REG &= ~LCDCF_ON)
+#define DISPLAY_ON (LCDC_REG |= LCDCF_ON)
+#define HIDE_SPRITES (LCDC_REG &= ~0x02u)
+#define SHOW_SPRITES (LCDC_REG |= 0x02u)
+#define HIDE_WIN (LCDC_REG &= ~0x20u)
+#define SHOW_BKG (LCDC_REG |= 0x01u)
+#define SPRITES_8x16 (LCDC_REG |= 0x04u)
 
 typedef struct OAM_item_t { uint8_t y, x, tile, prop; } OAM_item_t;
 extern volatile OAM_item_t shadow_OAM[40];
-extern uint8_t SCX_REG, SCY_REG, DIV_REG;
+extern uint8_t SCX_REG, SCY_REG, DIV_REG, LCDC_REG;
 uint8_t joypad(void);
 void vsync(void);
+void refresh_OAM(void);
 void set_sprite_data(uint8_t first, uint8_t count, const uint8_t *data);
 void set_bkg_data(uint8_t first, uint8_t count, const uint8_t *data);
 void fill_bkg_rect(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t tile);

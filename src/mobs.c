@@ -48,11 +48,11 @@ void initAliens(void) {
     }
 }
 
-void alienMoves(void) {
+uint8_t alienMoves(void) {
     Entity_t *alien = aliens;
     Bullet_t *bullet = alienBullets;
     uint8_t i, sprite = ALIEN_SPRITE;
-    uint8_t frame;
+    uint8_t frame, remaining = 0;
     int8_t delta;
     int16_t x, y;
     --alienTurn;
@@ -98,6 +98,8 @@ void alienMoves(void) {
                 bullet->active = TRUE;
             }
         } else hideEntity(sprite);
+        ++remaining;
     }
     if (!alienTurn) alienTurn = ALIEN_MOVE_DELAY;
+    return remaining;
 }

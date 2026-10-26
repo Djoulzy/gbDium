@@ -13,6 +13,6 @@ extern Entity_t aliens[NB_ALIENS];
 extern const metasprite_t * const alienFrames[4];
 
 void initAliens(void);
-void alienMoves(void);
+uint8_t alienMoves(void);
 
 #endif

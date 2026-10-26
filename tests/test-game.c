@@ -7,18 +7,27 @@
 #include "player.h"
 #include "mobs.h"
 #include "boss.h"
+#include "game.h"
 #include "../res/bigShip.h"
 
 volatile OAM_item_t shadow_OAM[40];
-uint8_t SCX_REG, SCY_REG, DIV_REG;
+uint8_t SCX_REG, SCY_REG, DIV_REG, LCDC_REG;
 static uint8_t keys, randomByte;
+static OAM_item_t hardwareOAM[40];
 static uint8_t tilemap[32 * 32];
 static uint8_t inVblank, transfers;
 static uint8_t initializing;
 static uint16_t transferBytes;
 
 uint8_t joypad(void) { return keys; }
-void vsync(void) { inVblank = TRUE; }
+void vsync(void) {
+    inVblank = TRUE;
+    memcpy(hardwareOAM, (const void *)shadow_OAM, sizeof(hardwareOAM));
+}
+void refresh_OAM(void) {
+    assert(!(LCDC_REG & LCDCF_ON));
+    memcpy(hardwareOAM, (const void *)shadow_OAM, sizeof(hardwareOAM));
+}
 void initrand(uint16_t seed) { randomByte = (uint8_t)seed; }
 uint8_t test_rand(void) { randomByte += 37; return randomByte; }
 void set_sprite_data(uint8_t first, uint8_t count, const uint8_t *data) {
@@ -41,9 +50,9 @@ void set_bkg_submap(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint8_t *m
             tilemap[((y + row) & 31) * 32 + ((x + col) & 31)] = map[(y + row) * map_w + x + col];
 }
 void set_bkg_tiles(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint8_t *data) {
-    assert(initializing || inVblank);
+    assert(initializing || !(LCDC_REG & LCDCF_ON) || inVblank);
     assert(x < 32 && y < 32 && w <= 32 && h <= 32);
-    if (!initializing) {
+    if (!initializing && (LCDC_REG & LCDCF_ON)) {
         assert(w == 1 || h == 1);
         ++transfers;
         transferBytes += w * h;
@@ -75,6 +84,7 @@ static void reset(void) {
     initAliens();
     memset(aliens, 0, sizeof(aliens));
     memset(alienBullets, 0, sizeof(alienBullets));
+    LCDC_REG = 0x87u;
 }
 
 static void check_view(void) {
@@ -328,6 +338,83 @@ static void test_boss(void) {
     puts("OK: 4096 frames de combat, limites écran, déplacements du boss et alignement des tourelles");
 }
 
+static void test_level_progression(void) {
+    /* Starting a game always selects the enemy level, including after a boss. */
+    keys = 0;
+    bossBullets[0].active = TRUE;
+    shadow_OAM[39].y = 80;
+    LCDC_REG |= 0x20u;
+    startGame();
+    assert(gameMode == GAME_FREE);
+    assert((LCDC_REG & 0xa7u) == 0x87u);
+    assert(!shadow_OAM[39].y);
+    for (uint8_t i = 0; i < NB_ALIENS; ++i) assert(aliens[i].active);
+    for (uint8_t i = 0; i < NB_SHIPGUN; ++i)
+        assert(!shipguns[i].active && !bossBullets[i].active);
+    updateGame();
+    assert(gameMode == GAME_FREE);
+
+    /* Four enemies have been defeated; the last one still counts offscreen. */
+    for (uint8_t i = 0; i < NB_ALIENS - 1; ++i) aliens[i].active = FALSE;
+    Entity_t *last = &aliens[NB_ALIENS - 1];
+    *last = (Entity_t){.X = 800, .Y = 72, .active = TRUE};
+    updateGame();
+    assert(gameMode == GAME_FREE);
+
+    /* Hit the last enemy through the normal projectile collision path. */
+    last->X = 80;
+    playerBullets[0] = (Bullet_t){.X = 72 - SHOOT_SPEED, .Y = 72, .speedX = SHOOT_SPEED, .active = TRUE};
+    updateGame();
+    assert(last->overlapped && last->active && !last->animStep);
+    for (uint8_t frame = 0; frame < 20; ++frame) {
+        updateGame();
+        assert(gameMode == GAME_FREE && last->active);
+    }
+
+    /* Carry-over state must be cleared at the actual level boundary. */
+    player.entity.X = 160;
+    player.upscaledX = 160 << SCREEN_SCALE;
+    player.speedX = -MAX_SHIP_SPEED;
+    player.direction = -1;
+    player.turning = TRUE;
+    player.turnFrame = 3;
+    player.shootCooldown = SHOOT_DELAY;
+    player.entity.overlapped = TRUE;
+    playerBullets[1] = (Bullet_t){.X = 100, .Y = 20, .active = TRUE};
+    alienBullets[0] = (Bullet_t){.X = 140, .Y = 100, .active = TRUE};
+    bossBullets[0] = (Bullet_t){.X = 100, .Y = 100, .active = TRUE};
+    shadow_OAM[39].y = 80;
+    keys = J_A;
+    updateGame();
+
+    assert(gameMode == GAME_BOSS);
+    assert(player.entity.X == START_SCROLL_X && player.entity.Y == START_SCROLL_Y);
+    assert(player.upscaledX == START_SCROLL_X << SCREEN_SCALE);
+    assert(player.upscaledY == START_SCROLL_Y << SCREEN_SCALE);
+    assert(!player.speedX && !player.speedY && player.direction == 1);
+    assert(!player.turning && !player.turnFrame && !player.shootCooldown);
+    assert(!player.entity.overlapped);
+    assert(!scene.camera_x && !scene.camera_y && !scene.map_pos_x && !scene.map_pos_y);
+    assert(!SCX_REG && !SCY_REG);
+    assert(boss.X == BOSS_ENTRY_X && !boss.Y);
+    for (uint8_t i = 0; i < MAX_SHOOT_NUM; ++i) assert(!playerBullets[i].active);
+    for (uint8_t i = 0; i < NB_ALIENS; ++i)
+        assert(!aliens[i].active && !alienBullets[i].active);
+    for (uint8_t i = 0; i < NB_SHIPGUN; ++i)
+        assert(shipguns[i].active && !bossBullets[i].active);
+    for (uint8_t i = 0; i < 40; ++i) assert(!shadow_OAM[i].y && !hardwareOAM[i].y);
+
+    /* The boss continues normally instead of being reinitialized each frame. */
+    updateGame();
+    assert(playerBullets[0].active);
+    for (uint8_t frame = 0; frame < 60; ++frame) updateGame();
+    assert(gameMode == GAME_BOSS && boss.X < BOSS_ENTRY_X);
+    startGame();
+    assert(gameMode == GAME_FREE);
+    for (uint8_t i = 0; i < NB_ALIENS; ++i) assert(aliens[i].active);
+    puts("OK: enchaînement ennemis puis boss après la dernière explosion, nettoyage et nouvelle partie");
+}
+
 int main(void) {
     test_scrolling();
     test_projectiles();
@@ -336,6 +423,7 @@ int main(void) {
     test_full_loop();
     test_camera_reframe();
     test_boss();
+    test_level_progression();
     puts("Tous les tests de logique passent.");
     return 0;
 }

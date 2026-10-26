@@ -56,7 +56,7 @@ $(ROM): $(OBJECTS) $(OBJDIR)/build-config | check-toolchain
 
 check-logic:
 	@mkdir -p "$(OBJDIR)/tests"
-	$(HOST_CC) $(HOST_CFLAGS) -Itests/stubs -Isrc tests/test-game.c src/GraphLib.c src/player.c src/mobs.c src/boss.c $(wildcard res/*.c) -o "$(OBJDIR)/tests/check-game"
+	$(HOST_CC) $(HOST_CFLAGS) -Itests/stubs -Isrc tests/test-game.c src/GraphLib.c src/player.c src/mobs.c src/boss.c src/game.c $(wildcard res/*.c) -o "$(OBJDIR)/tests/check-game"
 	@"$(OBJDIR)/tests/check-game"
 
 check: $(ROM) check-logic

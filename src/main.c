@@ -1,11 +1,8 @@
 #include "GraphLib.h"
-#include "player.h"
-#include "mobs.h"
-#include "boss.h"
-#include "../res/scene_tiles.h"
+#include "game.h"
 #include "../res/title.h"
 
-static uint8_t titleScreen(void) {
+static void titleScreen(void) {
     uint8_t keys;
     DISPLAY_OFF;
     HIDE_SPRITES;
@@ -23,32 +20,10 @@ static uint8_t titleScreen(void) {
         vsync();
         keys = joypad();
     } while (!(keys & J_START));
-    return keys & J_SELECT ? GAME_FREE : GAME_BOSS;
-}
-
-static void init_gfx(void) {
-    DISPLAY_OFF;
-    SPRITES_8x16;
-    if (gameMode == GAME_FREE) {
-        set_bkg_data(0, 10, scene_tiles);
-        setupScene();
-    }
-    initPlayer();
-    if (gameMode == GAME_BOSS) initBoss();
-    else initAliens();
-    SHOW_BKG;
-    SHOW_SPRITES;
-    DISPLAY_ON;
 }
 
 void main(void) {
-    gameMode = titleScreen();
-    init_gfx();
-    while (1) {
-        playerMove();
-        if (gameMode == GAME_BOSS) bossMove();
-        else alienMoves();
-        moveBullets();
-        updateView();
-    }
+    titleScreen();
+    startGame();
+    while (1) updateGame();
 }
