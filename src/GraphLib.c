@@ -1,17 +1,21 @@
 #include "GraphLib.h"
 #include "player.h"
 #include "mobs.h"
+#include "boss.h"
 #include "../res/scene1.h"
 
 Scene_t scene;
+uint8_t gameMode;
 Bullet_t playerBullets[MAX_SHOOT_NUM];
 Bullet_t alienBullets[NB_ALIENS];
+Bullet_t bossBullets[NB_SHIPGUN];
 
 /* Column gathering happens outside VBlank. Only the bounded VRAM copies
  * and scroll-register writes follow vsync(). No full-map redraw per frame. */
 static uint8_t columnBuffer[19];
 
 void setupScene(void) {
+    gameMode = GAME_FREE;
     scene.camera_x = 0;
     scene.camera_y = 0;
     scene.map_pos_x = 0;
@@ -44,8 +48,9 @@ void moveBullets(void) {
         x = bullet->X - (int16_t)scene.camera_x;
         y = bullet->Y - scene.camera_y;
         if (isVisible(x, y)) {
-            target = aliens;
-            for (targets = NB_ALIENS; targets; --targets, ++target) {
+            target = gameMode == GAME_BOSS ? shipguns : aliens;
+            targets = gameMode == GAME_BOSS ? NB_SHIPGUN : NB_ALIENS;
+            for (; targets; --targets, ++target) {
                 if (target->active && !target->overlapped && bulletHits(bullet, target)) {
                     target->overlapped = TRUE;
                     target->animStep = 0;
@@ -59,12 +64,15 @@ void moveBullets(void) {
         else hide_sprite(sprite);
     }
 
-    bullet = alienBullets;
-    sprite = ALIEN_BULLET_SPRITE;
-    for (count = NB_ALIENS; count; --count, ++bullet, ++sprite) {
+    bullet = gameMode == GAME_BOSS ? bossBullets : alienBullets;
+    sprite = gameMode == GAME_BOSS ? SHIPGUN_BULLET_SPRITE : ALIEN_BULLET_SPRITE;
+    count = gameMode == GAME_BOSS ? NB_SHIPGUN : NB_ALIENS;
+    for (; count; --count, ++bullet, ++sprite) {
         if (!bullet->active) continue;
-        bullet->X += bullet->speedX;
-        bullet->Y += bullet->speedY;
+        if (gameMode != GAME_BOSS || boss.moved) {
+            bullet->X += bullet->speedX;
+            bullet->Y += bullet->speedY;
+        }
         x = bullet->X - (int16_t)scene.camera_x;
         y = bullet->Y - scene.camera_y;
         if (!isVisible(x, y)) bullet->active = FALSE;
@@ -86,6 +94,13 @@ void updateView(void) {
     const uint8_t *source;
     uint8_t *destination;
     const uint8_t *rowSource = Scene1;
+
+    if (gameMode == GAME_BOSS) {
+        vsync();
+        SCX_REG = (uint8_t)(BOSS_ENTRY_X - boss.X);
+        SCY_REG = (uint8_t)-boss.Y;
+        return;
+    }
 
     if (tx != scene.map_pos_x) {
         column = tx < scene.map_pos_x ? tx : tx + 20u;

@@ -20,6 +20,8 @@ extern uint8_t SCX_REG, SCY_REG, DIV_REG;
 uint8_t joypad(void);
 void vsync(void);
 void set_sprite_data(uint8_t first, uint8_t count, const uint8_t *data);
+void set_bkg_data(uint8_t first, uint8_t count, const uint8_t *data);
+void fill_bkg_rect(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t tile);
 void set_bkg_submap(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint8_t *map, uint8_t map_w);
 void set_bkg_tiles(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint8_t *data);
 static inline void set_sprite_tile(uint8_t i, uint8_t tile) { shadow_OAM[i].tile = tile; }

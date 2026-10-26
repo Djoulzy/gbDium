@@ -6,6 +6,8 @@
 
 GBDK_HOME ?= $(if $(GBDKDIR),$(GBDKDIR),$(CURDIR)/.tools/gbdk)
 LCC ?= $(patsubst %/,%,$(GBDK_HOME))/bin/lcc
+PNG2ASSET ?= $(patsubst %/,%,$(GBDK_HOME))/bin/png2asset
+ROMUSAGE ?= $(patsubst %/,%,$(GBDK_HOME))/bin/romusage
 PYTHON ?= python3
 HOST_CC ?= cc
 HOST_CFLAGS ?= -O2 -std=c11 -Wall -Wextra -Werror
@@ -20,7 +22,7 @@ HEADERS := $(wildcard src/*.h res/*.h)
 SAMEBOY_APP ?=
 RUNNER ?=
 
-.PHONY: all default setup doctor check-toolchain check check-logic run test clean help FORCE
+.PHONY: all default setup doctor check-toolchain check check-logic run test image usage clean help FORCE
 
 all default: $(ROM)
 
@@ -54,7 +56,7 @@ $(ROM): $(OBJECTS) $(OBJDIR)/build-config | check-toolchain
 
 check-logic:
 	@mkdir -p "$(OBJDIR)/tests"
-	$(HOST_CC) $(HOST_CFLAGS) -Itests/stubs -Isrc tests/test-game.c src/GraphLib.c src/player.c src/mobs.c $(wildcard res/*.c) -o "$(OBJDIR)/tests/check-game"
+	$(HOST_CC) $(HOST_CFLAGS) -Itests/stubs -Isrc tests/test-game.c src/GraphLib.c src/player.c src/mobs.c src/boss.c $(wildcard res/*.c) -o "$(OBJDIR)/tests/check-game"
 	@"$(OBJDIR)/tests/check-game"
 
 check: $(ROM) check-logic
@@ -66,10 +68,17 @@ run: check
 # Preserve the original development command.
 test: run
 
+image: check-toolchain
+	"$(PNG2ASSET)" assets/title.png -map -noflip -bpp 2 -o res/title.c
+	"$(PNG2ASSET)" assets/bigShip.png -map -noflip -keep_duplicate_tiles -bpp 2 -o res/bigShip.c
+
+usage: $(ROM)
+	"$(ROMUSAGE)" $(PROJECTNAME).noi -g
+
 clean:
 	rm -rf "$(OBJDIR)/src" "$(OBJDIR)/res" "$(OBJDIR)/tests"
 	rm -f "$(OBJDIR)/build-config" "$(OBJDIR)/build-config.tmp" $(OBJDIR)/*.o
 	rm -f $(PROJECTNAME).gb $(PROJECTNAME).ihx $(PROJECTNAME).map $(PROJECTNAME).noi $(PROJECTNAME).sym $(PROJECTNAME).cdb $(PROJECTNAME).adb
 
 help:
-	@printf '%s\n' 'make setup       : installer GBDK 4.5.0 dans .tools/gbdk' 'make doctor      : vérifier GBDK, Python et SameBoy' 'make             : compiler gbDium.gb' 'make check       : compiler, tester la logique et vérifier la ROM' 'make check-logic : tester la logique avec le compilateur C de la machine' 'make test        : compiler, tester et ouvrir dans SameBoy (alias : make run)' 'make clean       : supprimer la compilation, conserver les sauvegardes'
+	@printf '%s\n' 'make setup       : installer GBDK 4.5.0 dans .tools/gbdk' 'make doctor      : vérifier GBDK, Python et SameBoy' 'make             : compiler gbDium.gb' 'make check       : compiler, tester la logique et vérifier la ROM' 'make check-logic : tester la logique avec le compilateur C de la machine' 'make test        : compiler, tester et ouvrir dans SameBoy (alias : make run)' 'make image       : réexporter les PNG du titre et du boss vers res/' 'make usage       : afficher la mémoire ROM et RAM occupée' 'make clean       : supprimer la compilation, conserver les sauvegardes'

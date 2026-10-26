@@ -5,11 +5,11 @@ Prototype de jeu **Game Boy**, écrit en C avec **GBDK-2020**, inspiré du shoot
 
 ## État du jeu
 
-Le prototype contient un vaisseau animé avec accélération, inertie et retournement, une caméra qui suit le joueur, des tirs, cinq ennemis qui poursuivent le joueur et tirent dans sa direction, ainsi qu'une animation d'explosion des ennemis touchés.
+Le prototype propose les deux scènes récupérées lors de la fusion de `develop` : un combat contre un grand vaisseau à trois tourelles, et un mode de vol libre avec caméra, retournements et cinq ennemis qui poursuivent le joueur. Le joueur conserve l'accélération, l'inertie et ses animations dans les deux modes.
 
-L'écran titre original « GB-DIUM » apparaît au démarrage. Appuyer sur **Start** pour lancer le jeu. L'image source est conservée dans `assets/title.png` et son export en tuiles dans `res/title.c` / `res/title.h`.
+L'écran titre original « GB-DIUM » apparaît au démarrage. Appuyer sur **Start** pour lancer le combat contre le boss, comme dans la dernière version de `develop`. Maintenir **Select** en appuyant sur **Start** pour jouer en vol libre. L'image source est conservée dans `assets/title.png` et son export en tuiles dans `res/title.c` / `res/title.h`.
 
-La scène mesure **128 × 32 tuiles**, soit **1 024 × 256 pixels**, pour un écran de **160 × 144 pixels**. Il n'y a pas encore de menu, de score, de gestion des vies, de fin de partie ou de son. Les collisions des tirs ennemis avec le joueur sont détectées, mais ne déclenchent pas encore de destruction du vaisseau.
+La scène de vol libre mesure **128 × 32 tuiles**, soit **1 024 × 256 pixels**, pour un écran de **160 × 144 pixels**. Face au boss, le joueur reste dans l'écran et tire vers la droite ; le décor du boss se déplace indépendamment, avec ses trois tourelles alignées et leurs tirs vers la gauche. Les tourelles touchées explosent. Il n'y a pas encore de score, de gestion des vies, de fin de partie ou de son. Les collisions des tirs ennemis avec le joueur sont détectées, mais ne déclenchent pas encore sa destruction.
 
 ## Démarrage rapide
 
@@ -66,6 +66,8 @@ RUNNER := /chemin/vers/sameboy
 | `make -j2 check` | Compile en parallèle, teste la logique et valide la ROM. |
 | `make check-logic` | Compile et exécute les tests de logique avec le compilateur C natif. |
 | `make test` ou `make run` | Valide la ROM puis la charge dans SameBoy. |
+| `make image` | Réexporte les PNG du titre et du boss vers `res/` avec `png2asset`. |
+| `make usage` | Affiche l'occupation mémoire avec `romusage`. |
 | `make clean` | Efface les produits de compilation et conserve les sauvegardes. |
 | `make help` | Affiche les commandes disponibles. |
 
@@ -79,30 +81,33 @@ Par défaut, `LCCFLAGS=-debug -Wf--max-allocs-per-node50000 -Wf--opt-code-speed`
 
 Les chemins IntelliSense utilisent `.tools/gbdk/include` et les variables d'environnement `GBDK_HOME` / `GBDKDIR`. Si GBDK est configuré uniquement dans `config.local.mk`, définir aussi sa variable d'environnement pour IntelliSense, puis relancer VS Code. Clang sert à l'analyse dans l'éditeur ; **la ROM est compilée par GBDK/SDCC**.
 
+La configuration de débogage Emulicious de `develop` est également conservée dans `.vscode/launch.json`, avec une tâche de compilation à jour. Elle nécessite Emulicious et son extension VS Code ; SameBoy reste l'émulateur utilisé par `make test`.
+
 ## Contrôles et test dans SameBoy
 
 | Bouton Game Boy | Action |
 | --- | --- |
-| Start | Passer l'écran titre et démarrer le jeu. |
-| Croix directionnelle | Accélérer dans la direction choisie ; gauche/droite déclenchent aussi le retournement. |
-| A | Tirer, sauf pendant le retournement ; six projectiles simultanés maximum. |
+| Start, à l'écran titre | Démarrer le combat contre le boss. |
+| Select + Start, à l'écran titre | Démarrer le vol libre. |
+| Croix directionnelle | Accélérer dans la direction choisie ; en vol libre, gauche/droite déclenchent aussi le retournement et le recadrage de la caméra. |
+| A | Tirer, sauf pendant le retournement ; trois projectiles simultanés maximum, comme dans `develop`. |
 | Select | Remettre les vitesses à zéro ; relâcher les directions pour arrêter le vaisseau. |
 
 Le clavier correspondant dépend de la configuration de SameBoy. Pendant la partie, B et Start n'ont actuellement pas d'action.
 
 Après `make test`, vérifier manuellement :
 
-1. L'affichage de l'écran titre, puis le démarrage de la scène avec Start et l'affichage du vaisseau et des ennemis.
-2. Les déplacements dans les quatre directions, l'inertie et le retournement.
-3. Le suivi de la caméra, le chargement du décor et les limites de la scène.
-4. Les tirs maintenus avec A, les explosions et la disparition des ennemis touchés.
-5. L'arrêt avec Select et une nouvelle session après réinitialisation de la ROM.
+1. L'affichage de l'écran titre, puis le démarrage du combat contre le boss avec Start.
+2. Les limites de déplacement du joueur à l'écran, l'arrivée du boss, le suivi de ses trois tourelles et leurs tirs.
+3. Les tirs maintenus avec A, les explosions et la disparition des tourelles touchées.
+4. Après réinitialisation, le vol libre avec Select + Start : inertie, retournement, recadrage, décor et ennemis.
+5. L'arrêt avec Select, les limites de la carte et une nouvelle session après réinitialisation.
 
 Pour déboguer, activer le mode développeur dans SameBoy et ouvrir sa console. Les commandes du débogueur sont décrites dans la [documentation officielle](https://sameboy.github.io/debugger/).
 
 ## Vérifications automatiques et CI
 
-`make check` compile la ROM et exécute les tests du véritable code de jeu avec une simulation de la tilemap et de la mémoire OAM. Ils couvrent les collisions simultanées, les boîtes de collision, l'épuisement et la réutilisation des tirs, le masquage hors écran, les limites de déplacement, les retournements et les explosions. Le décor visible est comparé à la carte source pendant un parcours complet aller-retour et pendant **4 096 frames** de jeu simulées. Les transferts de décor sont limités à deux appels et 40 tuiles par frame, après `vsync()`.
+`make check` compile la ROM et exécute les tests du véritable code de jeu avec une simulation de la tilemap et de la mémoire OAM. Ils couvrent les collisions simultanées, les boîtes de collision, l'épuisement et la réutilisation des tirs, le masquage hors écran, les limites de déplacement, les retournements et les explosions. Le décor visible est comparé à la carte source pendant un parcours complet aller-retour et pendant **4 096 frames de vol libre**. **4 096 frames de combat contre le boss** vérifient aussi ses déplacements, l'alignement des tourelles et les limites du joueur. Les tests contrôlent la cadence des tirs du boss, les impacts et la destruction des tourelles. Le défilement en vol libre reste limité à deux transferts et 40 tuiles par frame, après `vsync()` ; le décor du boss est chargé une fois, puis déplacé par les registres de défilement.
 
 Le contrôle de cartouche vérifie ensuite la taille de **32 Kio**, le logo Nintendo, le titre `GBDIUM`, la compatibilité DMG, le type **ROM ONLY** sans RAM cartouche, ainsi que les checksums de l'en-tête et du fichier complet. Python n'utilise aucune dépendance externe.
 
@@ -123,10 +128,12 @@ make check-logic HOST_CFLAGS='-O1 -g -std=c11 -Wall -Wextra -Werror -fsanitize=a
 | `src/main.c` | Initialisation graphique et boucle principale. |
 | `src/player.c`, `src/player.h` | Commandes, déplacement, animations et tirs du joueur. |
 | `src/mobs.c`, `src/mobs.h` | Ennemis, poursuite, tirs et explosions. |
+| `src/boss.c`, `src/boss.h` | Entrée et déplacement du boss, tourelles et tirs. |
 | `src/GraphLib.c`, `src/GraphLib.h` | Caméra, défilement, entités, projectiles et collisions. |
 | `src/settings.h` | Dimensions d'écran, position initiale et paramètres de défilement. |
 | `res/` | Tuiles, carte et métasprites en C, compilés dans le jeu. |
-| `assets/` | Sources graphiques GBTD (`.gbr`) et GBMB (`.gbm`). |
+| `res/bak/` | Ancien export du titre conservé depuis `develop`, exclu de la compilation. |
+| `assets/` | Sources graphiques GBTD (`.gbr`), GBMB (`.gbm`) et PNG du titre, du boss et de la tourelle. |
 | `scripts/` | Installation GBDK, lancement SameBoy et validation de ROM. |
 | `tests/` | Tests du code de jeu et simulation native des API graphiques. |
 | `.vscode/` | Configuration IntelliSense et tâches de développement. |
@@ -138,13 +145,13 @@ Les ressources C sont déjà exportées : **GBTD, GBMB et Wine ne sont pas néce
 La boucle conserve quatre étapes par frame : joueur, ennemis, projectiles, puis synchronisation vidéo. Les fonctions qui correspondent à ces étapes restent séparées. Seuls les petits tests de visibilité, de collision et le masquage des métasprites sont intégrés avec `inline` ; l'assembleur généré a été vérifié pour confirmer l'absence d'appels à ces helpers. Les routines graphiques de GBDK restent utilisées pour les métasprites et les copies VRAM.
 
 - **Ressources en ROM** : la carte et les tuiles sont `const`, ce qui évite leur copie dans la RAM au démarrage. Conserver ce qualificatif lors des prochains exports GBTD/GBMB.
-- **Mémoire bornée** : un joueur, cinq ennemis, six tirs joueur et cinq tirs ennemis sont stockés dans des structures et tableaux statiques compacts. Les listes chaînées, les allocations dynamiques et les structures de coordonnées dupliquées ont été retirées.
+- **Mémoire bornée** : un joueur, cinq ennemis, trois tourelles, trois tirs joueur, cinq tirs ennemis et trois tirs de tourelle sont stockés dans des structures et tableaux statiques compacts. Les listes chaînées, les allocations dynamiques et les structures de coordonnées dupliquées ont été retirées.
 - **Calculs simples** : lecture unique de `joypad()` par frame, compteurs et vitesses sur 8 bits, positions du monde et positions fixes sur 16 bits. Les animations du vaisseau utilisent des décalages au lieu de tables et de l'appel à `abs()`.
 - **Boucles directes** : les tableaux sont parcourus avec des pointeurs qui avancent. Le joueur est accessible directement, sans traverser une liste puis un pointeur d'entité.
 - **Collisions cohérentes** : les coordonnées du monde sont conservées jusqu'au test de visibilité ; la conversion en coordonnées OAM sur 8 bits intervient ensuite. Chaque tir parcourt ses propres cibles. Les sprites hors écran sont masqués par leur coordonnée Y.
 - **Défilement borné** : la scène initiale comprend la rangée et la colonne partiellement visibles. Une colonne de 19 tuiles maximum est préparée avant `vsync()` ; seules les nouvelles lignes/colonnes sont envoyées en VRAM, puis les registres de défilement sont mis à jour. La vitesse maximale garantit au plus un changement de tuile par axe et par frame.
 
-Ces choix suivent les [recommandations GBDK pour le code et les optimisations SDCC](https://gbdk.org/docs/api/docs_coding_guidelines.html). Le budget réserve **35 des 40 sprites matériels**. La limite de **10 sprites par ligne** s'applique toujours lorsque plusieurs objets se superposent ; aucun système de répartition/flicker n'est encore ajouté. Voir [Pan Docs : OAM](https://gbdev.io/pandocs/OAM.html).
+Ces choix suivent les [recommandations GBDK pour le code et les optimisations SDCC](https://gbdk.org/docs/api/docs_coding_guidelines.html). Les sprites **8×16** de `develop` utilisent deux entrées OAM par personnage de 16×16, ce qui ramène la réservation totale à **29 des 40 sprites matériels**, tourelles comprises. La limite de **10 sprites par ligne** s'applique toujours lorsque plusieurs objets se superposent ; aucun système de répartition/flicker n'est encore ajouté. Voir [Pan Docs : OAM](https://gbdev.io/pandocs/OAM.html).
 
 Mesures avec GBDK 4.5.0 et les options du Makefile, avant/après la passe d'optimisation (avant restauration de l'écran titre) :
 
@@ -153,6 +160,8 @@ Mesures avec GBDK 4.5.0 et les options du Makefile, avant/après la passe d'opti
 | RAM statique (`_DATA` + `_INITIALIZED`, hors OAM et pile) | 5 495 octets | 182 octets |
 | Réserve du tas d'allocation | 2 048 octets | 0 octet |
 | ROM occupée, selon `romusage` | 15 648 octets | 11 680 octets |
+
+Après restauration du titre et intégration des deux modes de `develop`, l'occupation est de **232 octets de RAM statique** et **18 764 octets de ROM**, sans tas d'allocation. Le fichier de cartouche reste à 32 Kio.
 
 Le fichier de cartouche conserve sa taille de 32 Kio. Pour consulter l'occupation actuelle après compilation :
 

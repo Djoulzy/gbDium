@@ -27,8 +27,10 @@ typedef struct {
 } Scene_t;
 
 extern Scene_t scene;
+extern uint8_t gameMode;
 extern Bullet_t playerBullets[MAX_SHOOT_NUM];
 extern Bullet_t alienBullets[NB_ALIENS];
+extern Bullet_t bossBullets[NB_SHIPGUN];
 
 /* SDCC's plain inline avoids duplicate debug symbols across translation units.
  * Native C11 tests need static inline instead. Both expand these hot helpers. */
@@ -45,8 +47,6 @@ GAME_INLINE uint8_t isVisible(int16_t x, int16_t y) {
 
 GAME_INLINE void hideEntity(uint8_t first) {
     volatile OAM_item_t *oam = &shadow_OAM[first];
-    oam->y = 0; ++oam;
-    oam->y = 0; ++oam;
     oam->y = 0; ++oam;
     oam->y = 0;
 }

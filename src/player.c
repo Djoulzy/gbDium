@@ -6,7 +6,7 @@ Player_t player;
 
 void initPlayer(void) {
     uint8_t i;
-    set_sprite_data(0, 53, Ship);
+    set_sprite_data(0, 54, Ship);
     player.entity.X = START_SCROLL_X;
     player.entity.Y = START_SCROLL_Y;
     player.entity.active = TRUE;
@@ -33,6 +33,8 @@ void playerMove(void) {
     int8_t tilt;
     Bullet_t *bullet;
     int16_t x, y;
+    int16_t cameraTarget;
+    uint8_t strict = gameMode == GAME_BOSS;
 
     if (player.shootCooldown) --player.shootCooldown;
     if (keys & J_SELECT) player.speedX = player.speedY = 0;
@@ -49,7 +51,10 @@ void playerMove(void) {
     }
 
     if (!player.turning) {
-        if (keys & J_LEFT) {
+        if (strict) {
+            if ((keys & J_LEFT) && player.speedX > -MAX_SHIP_SPEED) player.speedX -= SHIP_ACCEL;
+            else if ((keys & J_RIGHT) && player.speedX < MAX_SHIP_SPEED) player.speedX += SHIP_ACCEL;
+        } else if (keys & J_LEFT) {
             if (player.direction > 0) {
                 player.turning = TRUE;
                 player.turnFrame = 0;
@@ -69,28 +74,36 @@ void playerMove(void) {
     player.entity.X = player.upscaledX >> SCREEN_SCALE;
     player.entity.Y = player.upscaledY >> SCREEN_SCALE;
 
-    if (player.entity.X < (int16_t)SCENE_BORDER_SIZE || player.entity.X > (int16_t)(SCENE_WIDTH - SCENE_BORDER_SIZE)) {
-        player.entity.X = player.entity.X < (int16_t)SCENE_BORDER_SIZE ? SCENE_BORDER_SIZE : SCENE_WIDTH - SCENE_BORDER_SIZE;
+    x = strict ? VIEWPORT_WIDTH : SCENE_WIDTH - SCENE_BORDER_SIZE;
+    y = strict ? VIEWPORT_HEIGHT : SCENE_HEIGHT - SCENE_BORDER_SIZE;
+    if (player.entity.X < (int16_t)SCENE_BORDER_SIZE || player.entity.X > x) {
+        player.entity.X = player.entity.X < (int16_t)SCENE_BORDER_SIZE ? SCENE_BORDER_SIZE : x;
         player.upscaledX = player.entity.X << SCREEN_SCALE;
         player.speedX = 0;
-        if (!player.turning) {
+        if (!strict && !player.turning) {
             player.turning = TRUE;
             player.turnFrame = 0;
         }
     }
-    if (player.entity.Y < (int16_t)SCENE_BORDER_SIZE || player.entity.Y > (int16_t)(SCENE_HEIGHT - SCENE_BORDER_SIZE)) {
-        player.entity.Y = player.entity.Y < (int16_t)SCENE_BORDER_SIZE ? SCENE_BORDER_SIZE : SCENE_HEIGHT - SCENE_BORDER_SIZE;
+    if (player.entity.Y < (int16_t)SCENE_BORDER_SIZE || player.entity.Y > y) {
+        player.entity.Y = player.entity.Y < (int16_t)SCENE_BORDER_SIZE ? SCENE_BORDER_SIZE : y;
         player.upscaledY = player.entity.Y << SCREEN_SCALE;
         player.speedY = 0;
     }
 
     /* Clamp before projecting sprites: every object uses the same camera. */
-    if (player.entity.X <= (int16_t)START_SCROLL_X) scene.camera_x = 0;
-    else if (player.entity.X >= (int16_t)(SCENE_WIDTH - START_SCROLL_X)) scene.camera_x = CAMERA_MAX_X;
-    else scene.camera_x = player.entity.X - START_SCROLL_X;
-    if (player.entity.Y <= (int16_t)START_SCROLL_Y) scene.camera_y = 0;
-    else if (player.entity.Y >= (int16_t)(SCENE_HEIGHT - START_SCROLL_Y)) scene.camera_y = CAMERA_MAX_Y;
-    else scene.camera_y = player.entity.Y - START_SCROLL_Y;
+    if (!strict) {
+        /* Look ahead in the flight direction, with a bounded pan on reversal. */
+        cameraTarget = player.entity.X - (int16_t)(((player.direction > 0) != player.turning) ? START_SCROLL_X : VIEWPORT_WIDTH - START_SCROLL_X);
+        if (cameraTarget < 0) cameraTarget = 0;
+        else if (cameraTarget > (int16_t)CAMERA_MAX_X) cameraTarget = CAMERA_MAX_X;
+        if ((int16_t)scene.camera_x < cameraTarget - (int16_t)CAMERA_PAN_STEP) scene.camera_x += CAMERA_PAN_STEP;
+        else if ((int16_t)scene.camera_x > cameraTarget + (int16_t)CAMERA_PAN_STEP) scene.camera_x -= CAMERA_PAN_STEP;
+        else scene.camera_x = cameraTarget;
+        if (player.entity.Y <= (int16_t)START_SCROLL_Y) scene.camera_y = 0;
+        else if (player.entity.Y >= (int16_t)(SCENE_HEIGHT - START_SCROLL_Y)) scene.camera_y = CAMERA_MAX_Y;
+        else scene.camera_y = player.entity.Y - START_SCROLL_Y;
+    }
 
     if ((keys & J_A) && !player.turning && !player.shootCooldown) {
         bullet = playerBullets;

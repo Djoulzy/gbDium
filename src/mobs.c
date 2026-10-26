@@ -6,24 +6,22 @@
 
 Entity_t aliens[NB_ALIENS];
 static uint8_t alienTurn;
+static int8_t alienSpeedX[NB_ALIENS], alienSpeedY[NB_ALIENS];
+static uint8_t alienFractionX[NB_ALIENS], alienFractionY[NB_ALIENS];
 
 static const metasprite_t alien1[] = {
-    METASPR_ITEM(0, -8, 53, 0), METASPR_ITEM(8, 0, 54, 0),
-    METASPR_ITEM(-8, 8, 55, 0), METASPR_ITEM(8, 0, 56, 0), METASPR_TERM
+    METASPR_ITEM(0, -8, 54, 0), METASPR_ITEM(0, 8, 56, 0), METASPR_TERM
 };
 static const metasprite_t alien2[] = {
-    METASPR_ITEM(0, -8, 57, 0), METASPR_ITEM(8, 0, 58, 0),
-    METASPR_ITEM(-8, 8, 59, 0), METASPR_ITEM(8, 0, 60, 0), METASPR_TERM
+    METASPR_ITEM(0, -8, 58, 0), METASPR_ITEM(0, 8, 60, 0), METASPR_TERM
 };
 static const metasprite_t alienBoom1[] = {
-    METASPR_ITEM(0, -8, 61, 0), METASPR_ITEM(8, 0, 62, 0),
-    METASPR_ITEM(-8, 8, 63, 0), METASPR_ITEM(8, 0, 64, 0), METASPR_TERM
+    METASPR_ITEM(0, -8, 62, 0), METASPR_ITEM(0, 8, 64, 0), METASPR_TERM
 };
 static const metasprite_t alienBoom2[] = {
-    METASPR_ITEM(0, -8, 65, 0), METASPR_ITEM(8, 0, 66, 0),
-    METASPR_ITEM(-8, 8, 67, 0), METASPR_ITEM(8, 0, 68, 0), METASPR_TERM
+    METASPR_ITEM(0, -8, 66, 0), METASPR_ITEM(0, 8, 68, 0), METASPR_TERM
 };
-static const metasprite_t * const alienFrames[] = {
+const metasprite_t * const alienFrames[4] = {
     alien1, alien2, alienBoom1, alienBoom2
 };
 
@@ -31,19 +29,21 @@ void initAliens(void) {
     Entity_t *alien = aliens;
     Bullet_t *bullet = alienBullets;
     uint8_t i;
-    set_sprite_data(53, 17, alien_tiles);
+    set_sprite_data(ALIEN_TILE, 18, alien_tiles);
     initrand(DIV_REG);
-    alienTurn = NB_ALIENS;
+    alienTurn = ALIEN_MOVE_DELAY;
     for (i = 0; i != NB_ALIENS; ++i, ++alien, ++bullet) {
         alien->X = (uint16_t)rand() << 2u;
         alien->Y = rand();
         alien->active = TRUE;
         alien->overlapped = FALSE;
         alien->animStep = 0;
+        alienSpeedX[i] = alienSpeedY[i] = 0;
+        alienFractionX[i] = alienFractionY[i] = 0;
         bullet->active = FALSE;
-        set_sprite_tile(ALIEN_BULLET_SPRITE + i, 69);
+        set_sprite_tile(ALIEN_BULLET_SPRITE + i, 70);
         set_sprite_prop(ALIEN_BULLET_SPRITE + i, 0);
-        hideEntity(ALIEN_SPRITE + i * 4u);
+        hideEntity(ALIEN_SPRITE + i * ENTITY_SPRITES);
         hide_sprite(ALIEN_BULLET_SPRITE + i);
     }
 }
@@ -51,31 +51,37 @@ void initAliens(void) {
 void alienMoves(void) {
     Entity_t *alien = aliens;
     Bullet_t *bullet = alienBullets;
-    uint8_t remaining, sprite = ALIEN_SPRITE;
-    uint8_t bulletSprite = ALIEN_BULLET_SPRITE;
+    uint8_t i, sprite = ALIEN_SPRITE;
     uint8_t frame;
+    int8_t delta;
     int16_t x, y;
-
     --alienTurn;
-    for (remaining = NB_ALIENS; remaining; --remaining, ++alien, ++bullet, sprite += 4u, ++bulletSprite) {
+    for (i = 0; i != NB_ALIENS; ++i, ++alien, ++bullet, sprite += ENTITY_SPRITES) {
         if (!alien->active) continue;
         if (alien->overlapped) {
             if (alien->animStep == 20u) {
                 alien->active = FALSE;
                 bullet->active = FALSE;
                 hideEntity(sprite);
-                hide_sprite(bulletSprite);
+                hide_sprite(ALIEN_BULLET_SPRITE + i);
                 continue;
             }
             frame = alien->animStep < 10u ? 2u : 3u;
             ++alien->animStep;
         } else {
-            /* Preserve the original 4 movement frames out of every 5. */
-            if (alienTurn) {
-                if (alien->X < player.entity.X) alien->X += ALIEN_SPEED;
-                else if (alien->X > player.entity.X) alien->X -= ALIEN_SPEED;
-                if (alien->Y < player.entity.Y) alien->Y += ALIEN_SPEED;
-                else if (alien->Y > player.entity.Y) alien->Y -= ALIEN_SPEED;
+            if (!alienTurn) {
+                if (alien->X < player.entity.X && alienSpeedX[i] < ALIEN_MAX_SPEED) alienSpeedX[i] += ALIEN_SPEED;
+                else if (alien->X > player.entity.X && alienSpeedX[i] > -ALIEN_MAX_SPEED) alienSpeedX[i] -= ALIEN_SPEED;
+                if (alien->Y < player.entity.Y && alienSpeedY[i] < ALIEN_MAX_SPEED) alienSpeedY[i] += ALIEN_SPEED;
+                else if (alien->Y > player.entity.Y && alienSpeedY[i] > -ALIEN_MAX_SPEED) alienSpeedY[i] -= ALIEN_SPEED;
+                /* Carry the fraction in both directions: signed >> 4 alone
+                 * would move left immediately but discard small right speeds. */
+                delta = (int8_t)alienFractionX[i] + alienSpeedX[i];
+                alien->X += delta >> 4;
+                alienFractionX[i] = (uint8_t)delta & 15u;
+                delta = (int8_t)alienFractionY[i] + alienSpeedY[i];
+                alien->Y += delta >> 4;
+                alienFractionY[i] = (uint8_t)delta & 15u;
                 if (++alien->animStep == 20u) alien->animStep = 0;
             }
             frame = alien->animStep < 10u ? 0u : 1u;
@@ -84,7 +90,7 @@ void alienMoves(void) {
         y = alien->Y - scene.camera_y;
         if (isVisible(x, y)) {
             move_metasprite_ex(alienFrames[frame], 0, 0, sprite, (uint8_t)x, (uint8_t)y);
-            if (!alien->overlapped && alienTurn && !bullet->active) {
+            if (!alien->overlapped && !alienTurn && !bullet->active) {
                 bullet->X = alien->X;
                 bullet->Y = alien->Y;
                 bullet->speedX = player.entity.X == alien->X ? 0 : (player.entity.X > alien->X ? ALIEN_SHOOT_SPEED : -ALIEN_SHOOT_SPEED);
@@ -93,5 +99,5 @@ void alienMoves(void) {
             }
         } else hideEntity(sprite);
     }
-    if (!alienTurn) alienTurn = NB_ALIENS;
+    if (!alienTurn) alienTurn = ALIEN_MOVE_DELAY;
 }
