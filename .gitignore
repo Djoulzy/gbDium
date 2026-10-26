@@ -50,3 +50,15 @@ obj/*
 !obj/.gitkeep
 gbDium.gb
 gbDium.ihx
+gbDium.noi
+gbDium.sym
+gbDium.cdb
+gbDium.adb
+*.sav
+*.sna
+*.sn[0-9]
+*.s[0-9]
+.DS_Store
+.tools/
+config.local.mk
+__pycache__/

@@ -22,6 +22,6 @@
 #define Scene1Height 32
 #define Scene1Bank 0
 
-extern unsigned char Scene1[];
+extern const unsigned char Scene1[];
 
 /* End of SCENE1.H */

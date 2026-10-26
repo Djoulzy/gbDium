@@ -1,0 +1,38 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "GBDK: setup",
+            "type": "process",
+            "command": "make",
+            "args": ["setup"],
+            "options": { "cwd": "${workspaceFolder}" },
+            "problemMatcher": []
+        },
+        {
+            "label": "Game Boy: build",
+            "type": "process",
+            "command": "make",
+            "options": { "cwd": "${workspaceFolder}" },
+            "group": { "kind": "build", "isDefault": true },
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "Game Boy: check ROM",
+            "type": "process",
+            "command": "make",
+            "args": ["check"],
+            "options": { "cwd": "${workspaceFolder}" },
+            "group": "test",
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "Game Boy: run in SameBoy",
+            "type": "process",
+            "command": "make",
+            "args": ["test"],
+            "options": { "cwd": "${workspaceFolder}" },
+            "problemMatcher": "$gcc"
+        }
+    ]
+}

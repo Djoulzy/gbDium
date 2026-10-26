@@ -153,6 +153,6 @@
 #define ShipCGB51 0
 #define ShipCGB52 0
 /* Start of tile array. */
-extern unsigned char Ship[];
+extern const unsigned char Ship[];
 
 /* End of SHIP_16X16.H */

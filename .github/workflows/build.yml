@@ -1,0 +1,36 @@
+name: Build Game Boy ROM
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install GBDK 4.5.0
+        run: make setup
+      - name: Build, test game logic and validate cartridge
+        run: make -j2 check
+      - name: Check memory safety of game logic
+        run: make check-logic HOST_CFLAGS='-O1 -g -std=c11 -Wall -Wextra -Werror -fsanitize=address,undefined -fno-omit-frame-pointer'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gbDium-${{ matrix.os }}
+          path: |
+            gbDium.gb
+            gbDium.map
+            gbDium.noi
+          if-no-files-found: error

@@ -1,0 +1,2 @@
+# Historical GBTD/GBMB exports use CRLF; retain them without whitespace errors.
+res/*.[ch] whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

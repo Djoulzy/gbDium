@@ -26,6 +26,6 @@
 /* Bank of tiles. */
 #define scene_tilesBank 0
 /* Start of tile array. */
-extern unsigned char scene_tiles[];
+extern const unsigned char scene_tiles[];
 
 /* End of SCENE_TILES.H */

@@ -3,22 +3,24 @@
         {
             "name": "Mac",
             "includePath": [
-                "${workspaceFolder}/**",
-                "/Users/jules/gbdk/include/**"
+                "${workspaceFolder}/src",
+                "${workspaceFolder}/res",
+                "${workspaceFolder}/.tools/gbdk/include",
+                "${env:GBDK_HOME}/include",
+                "${env:GBDKDIR}/include"
             ],
-            "defines": [],
-            "macFrameworkPath": [
-                "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks",
-                "/Users/jules/gbdk/include/**"
-            ],
+            "defines": ["__PORT_sm83", "__TARGET_gb"],
             "compilerPath": "/usr/bin/clang",
-            "cStandard": "c17",
+            "cStandard": "c11",
             "cppStandard": "c++17",
-            "intelliSenseMode": "macos-clang-x64",
-            "configurationProvider": "ms-vscode.makefile-tools",
+            "intelliSenseMode": "${default}",
             "browse": {
                 "path": [
-                    "/Users/jules/gbdk/include"
+                    "${workspaceFolder}/src",
+                    "${workspaceFolder}/res",
+                    "${workspaceFolder}/.tools/gbdk/include",
+                    "${env:GBDK_HOME}/include",
+                    "${env:GBDKDIR}/include"
                 ],
                 "limitSymbolsToIncludedHeaders": false
             },

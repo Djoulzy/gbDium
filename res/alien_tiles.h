@@ -26,6 +26,6 @@
 /* Bank of tiles. */
 #define alien_tilesBank 0
 /* Start of tile array. */
-extern unsigned char alien_tiles[];
+extern const unsigned char alien_tiles[];
 
 /* End of ALIEN_TILES.H */

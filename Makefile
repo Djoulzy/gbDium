@@ -1,72 +1,75 @@
-#
-# A Makefile that compiles all .c and .s files in "src" and "res" 
-# subdirectories and places the output in a "obj" subdirectory
-#
+.DEFAULT_GOAL := all
+.DELETE_ON_ERROR:
 
-# If you move this project you can change the directory 
-# to match your GBDK root directory (ex: GBDK_HOME = "C:/GBDK/"
-GBDK_HOME = ${GBDKDIR}
+# Machine-specific overrides stay outside version control.
+-include config.local.mk
 
-LCC = $(GBDK_HOME)bin/lcc
-# RUNNER = $(GBDK_HOME)bin/visualboyadvance-m.app/Contents/MacOS/visualboyadvance-m
-# RUNNER = $(GBDK_HOME)bin/SameBoy.app/Contents/MacOS/SameBoy
-# RUNNER = $(GBDK_HOME)bin/mGBA.app/Contents/MacOS/mGBA
-RUNNER = $(GBDK_HOME)bgb/bgb.exe
+GBDK_HOME ?= $(if $(GBDKDIR),$(GBDKDIR),$(CURDIR)/.tools/gbdk)
+LCC ?= $(patsubst %/,%,$(GBDK_HOME))/bin/lcc
+PYTHON ?= python3
+HOST_CC ?= cc
+HOST_CFLAGS ?= -O2 -std=c11 -Wall -Wextra -Werror
+LCCFLAGS ?= -debug -Wf--max-allocs-per-node50000 -Wf--opt-code-speed
+LDFLAGS ?= -Wl-m -Wm-ynGBDIUM -Wm-yt0 -Wm-yo2 -Wm-ya0
+PROJECTNAME := gbDium
+OBJDIR := obj
+ROM := $(PROJECTNAME).gb
+SOURCES := $(wildcard src/*.c res/*.c src/*.s res/*.s)
+OBJECTS := $(addprefix $(OBJDIR)/,$(addsuffix .o,$(basename $(SOURCES))))
+HEADERS := $(wildcard src/*.h res/*.h)
+SAMEBOY_APP ?=
+RUNNER ?=
 
+.PHONY: all default setup doctor check-toolchain check check-logic run test clean help FORCE
 
-# You can set flags for LCC here
-# For example, you can uncomment the line below to turn on debug output
-# LCCFLAGS = -debug
+all default: $(ROM)
 
-# You can set the name of the .gb ROM file here
-PROJECTNAME    = gbDium
+setup:
+	@sh scripts/setup-gbdk.sh
 
-SRCDIR      = src
-OBJDIR      = obj
-RESDIR      = res
-BINS	    = ./$(PROJECTNAME).gb
-CSOURCES    = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(RESDIR),$(notdir $(wildcard $(dir)/*.c)))
-ASMSOURCES  = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.s)))
-OBJS		= $(CSOURCES:%.c=$(OBJDIR)/%.o) $(ASMSOURCES:%.s=$(OBJDIR)/%.o)
+check-toolchain:
+	@test -x "$(LCC)" || { printf 'GBDK introuvable : %s\nLancer make setup ou définir GBDK_HOME dans config.local.mk.\n' "$(LCC)" >&2; exit 1; }
 
-all: default
+doctor: check-toolchain
+	@printf 'GBDK : %s\n' "$(LCC)"
+	@$(PYTHON) --version
+	@SAMEBOY_APP="$(SAMEBOY_APP)" RUNNER="$(RUNNER)" sh scripts/run-sameboy.sh --check
 
-test: clean default
-# $(RUNNER) $(BINS) &
-# open $(BINS) -a $(RUNNER)
-	/usr/local/bin/wine64 $(RUNNER) $(BINS) &
+# Rebuild when the compiler, flags or source list changes.
+$(OBJDIR)/build-config: FORCE
+	@mkdir -p "$(OBJDIR)"
+	@printf '%s\n' '$(LCC)' '$(LCCFLAGS)' '$(LDFLAGS)' '$(SOURCES)' > "$@.tmp"
+	@cmp -s "$@.tmp" "$@" && rm "$@.tmp" || mv "$@.tmp" "$@"
 
-default: ${OBJS} $(BINS)
+$(OBJDIR)/%.o: %.c $(HEADERS) $(OBJDIR)/build-config Makefile | check-toolchain
+	@mkdir -p "$(@D)"
+	"$(LCC)" $(LCCFLAGS) -c -o "$@" "$<"
 
-# Compile .c files in "src/" to .o object files
-$(OBJDIR)/%.o:	$(SRCDIR)/%.c
-	$(LCC) $(LCCFLAGS) -c -o $@ $<
+$(OBJDIR)/%.o: %.s $(OBJDIR)/build-config Makefile | check-toolchain
+	@mkdir -p "$(@D)"
+	"$(LCC)" $(LCCFLAGS) -c -o "$@" "$<"
 
-# Compile .c files in "res/" to .o object files
-$(OBJDIR)/%.o:	$(RESDIR)/%.c
-	$(LCC) $(LCCFLAGS) -c -o $@ $<
+$(ROM): $(OBJECTS) $(OBJDIR)/build-config | check-toolchain
+	"$(LCC)" $(LCCFLAGS) $(LDFLAGS) -o "$@" $(OBJECTS)
 
-# Compile .s assembly files in "src/" to .o object files
-$(OBJDIR)/%.o:	$(SRCDIR)/%.s
-	$(LCC) $(LCCFLAGS) -c -o $@ $<
+check-logic:
+	@mkdir -p "$(OBJDIR)/tests"
+	$(HOST_CC) $(HOST_CFLAGS) -Itests/stubs -Isrc tests/test-game.c src/GraphLib.c src/player.c src/mobs.c $(wildcard res/*.c) -o "$(OBJDIR)/tests/check-game"
+	@"$(OBJDIR)/tests/check-game"
 
-# If needed, compile .c files in "src/" to .s assembly files
-# (not required if .c is compiled directly to .o)
-$(OBJDIR)/%.s:	$(SRCDIR)/%.c
-	$(LCC) $(LCCFLAGS) -S -o $@ $<
+check: $(ROM) check-logic
+	@$(PYTHON) scripts/check-rom.py "$(ROM)"
 
-# Link the compiled object files into a .gb ROM file
-$(BINS): $(OBJS)
-	$(LCC) $(LCCFLAGS) -o $(BINS) $(OBJS)
+run: check
+	@SAMEBOY_APP="$(SAMEBOY_APP)" RUNNER="$(RUNNER)" sh scripts/run-sameboy.sh "$(abspath $(ROM))"
 
-sprite:
-	wine64 $(GBDK_HOME)gbtd22/GBTD.EXE
-
-map:
-	wine64 $(GBDK_HOME)gbmb18/GBMB.EXE
+# Preserve the original development command.
+test: run
 
 clean:
-#	rm -f  *.gb *.ihx *.cdb *.adb *.noi *.map
-	rm -f  $(OBJDIR)/*.*
-	rm -f *.gb *.ihx 
+	rm -rf "$(OBJDIR)/src" "$(OBJDIR)/res" "$(OBJDIR)/tests"
+	rm -f "$(OBJDIR)/build-config" "$(OBJDIR)/build-config.tmp" $(OBJDIR)/*.o
+	rm -f $(PROJECTNAME).gb $(PROJECTNAME).ihx $(PROJECTNAME).map $(PROJECTNAME).noi $(PROJECTNAME).sym $(PROJECTNAME).cdb $(PROJECTNAME).adb
 
+help:
+	@printf '%s\n' 'make setup       : installer GBDK 4.5.0 dans .tools/gbdk' 'make doctor      : vérifier GBDK, Python et SameBoy' 'make             : compiler gbDium.gb' 'make check       : compiler, tester la logique et vérifier la ROM' 'make check-logic : tester la logique avec le compilateur C de la machine' 'make test        : compiler, tester et ouvrir dans SameBoy (alias : make run)' 'make clean       : supprimer la compilation, conserver les sauvegardes'

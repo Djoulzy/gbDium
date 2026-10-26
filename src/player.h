@@ -1,18 +1,28 @@
-#ifndef player_H
-#define player_H
+#ifndef PLAYER_H
+#define PLAYER_H
 
 #include "GraphLib.h"
 
-#define MAX_SHOOT_NUM       6
-#define SHOOT_DELAY         10
+#define SHOOT_DELAY         10u
 #define MAX_SHIP_SPEED      32
 #define SHIP_ACCEL          2
 #define SHOOT_SPEED         4
-#define SHIP_RETURN_FRAME   5
 
-extern EntityList_t* player;
+#if MAX_SHIP_SPEED > (8 << SCREEN_SCALE)
+#error Scrolling streams at most one tile per axis per frame.
+#endif
 
-extern void initPlayer(void);
-extern void playerMove(void);
+typedef struct {
+    Entity_t entity;
+    int16_t upscaledX, upscaledY;
+    int8_t speedX, speedY;
+    int8_t direction, tilt;
+    uint8_t turning, turnFrame, shootCooldown;
+} Player_t;
+
+extern Player_t player;
+
+void initPlayer(void);
+void playerMove(void);
 
 #endif
